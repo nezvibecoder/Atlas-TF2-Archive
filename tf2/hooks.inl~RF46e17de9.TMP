@@ -1,0 +1,2952 @@
+#pragma once
+
+#include "features/features.hpp"
+#include "runtime/integrity.hpp"
+#include "script_api.hpp"
+
+i32 ATLAS_STDCALL hkPresent(
+    void       *device,
+    const void *src_rect,
+    const void *dest_rect,
+    const void *hwnd_override,
+    const void *dirty_region )
+{
+    if ( !g_session.poll( ) )
+    {
+        g_input.block( false );
+        g_render.set_stream_proof( false );
+        return g_hooks.m_present.stdcall< i32 >( device, src_rect, dest_rect, hwnd_override, dirty_region );
+    }
+
+    g_skybox.service( );
+    g_skins.service_game_tables( );
+
+    if ( !g_cl.m_is_early_init_finished )
+    {
+        return g_hooks.m_present.stdcall< i32 >( device, src_rect, dest_rect, hwnd_override, dirty_region );
+    }
+
+    if ( !g_cl.m_is_running )
+    {
+        g_cl.on_directx_frame( device );
+
+        if ( g_render.start_frame( device ) )
+        {
+            g_loading.draw( );
+            g_render.end_frame( );
+        }
+    } else
+    {
+        g_ragebot.begin_render_frame( );
+
+        if ( !g_input.window( ) )
+        {
+            g_input.attach_device( device );
+        }
+
+        g_cl.on_directx_frame( device );
+        g_render.set_stream_proof( g_cfg.m_streamer_mode.m_stream_proof );
+
+        if ( g_render.start_frame( device ) )
+        {
+            g_post_process.grade( );
+            g_gui.draw_background( );
+
+            g_esp_builder.begin_frame( );
+
+            g_render.text( MENU_FONT( ),
+                           point_t{ 8, g_cl.m_screen_height - 32 },
+                           color_t{ 255, 255, 255, 128 },
+                           ATLAS_XORSTR( "Build " CUR_COMMIT_HASH " at " __DATE__ " " __TIME__ "\nLast changes by: https://discord.gg/JtRXNunPf2" CUR_COMMIT_AUTHOR ).get( ),
+                           true );
+
+#if defined( ATLAS_DEV )
+            g_render.text( MENU_FONT( ),
+                           point_t{ g_cl.m_screen_width / 2, g_cl.m_screen_height - 32 },
+                           color_t{ 255, 192, 192, 128 },
+                           ATLAS_XORSTR( "Development build, for internal uses only. Do not distribute!\nAll things shown are not final and are subject to change at any time." ).get( ),
+                           true, render::text_align::center );
+#else
+            // NOTE: Hoku; Might be a real retard decision of me, remove if this causes crashes.
+            if ( !g_tf2.m_engine->IsInGame( ) )
+            {
+                g_render.text( MENU_FONT( ),
+                               point_t{ g_cl.m_screen_width / 2, g_cl.m_screen_height - 32 },
+                               color_t{ 255, 192, 192, 128 },
+                               ATLAS_XORSTR( "Beta build, for testing purposes only.\nAll things shown are not final and are subject to change at any time." ).get( ),
+                               true, render::text_align::center );
+            }
+#endif // ATLAS_DEV
+
+            g_render.text( MENU_FONT( ),
+                           point_t{ g_cl.m_screen_width - 8, g_cl.m_screen_height - 18 },
+                           color_t{ 255, 255, 255, 128 },
+                           g_api.user( ), true, render::text_align::right );
+
+            g_input.begin_frame( );
+
+            sync_menu_theme( );
+            g_player_cloud.poll( );
+            g_skins.sync_editor( );
+
+            g_draw.traverse( );
+            g_loading.draw( );
+
+            draw_notifications( g_cl.m_screen_width, g_cl.m_screen_height );
+            if ( g_cfg.m_misc.m_draw_watermark && g_loading.released( ) )
+            {
+                draw_watermark( g_cl.m_screen_width, g_cl.m_screen_height, watermark_values( ) );
+            }
+
+            g_proj_camera.paint( );
+            g_tickbase.paint( );
+            g_crits.paint( );
+            g_nospread.paint( );
+            g_radio.paint( );
+            draw_spectator_list( );
+            g_recorder.paint_keys( );
+
+            g_gui.think( g_cl.m_screen_width, g_cl.m_screen_height );
+            g_esp_builder.end_frame( );
+            g_gui.draw( );
+            g_render.end_frame( );
+
+            u32 stream_proof_stage{ };
+            u32 stream_proof_error{ };
+
+            if ( g_render.consume_stream_proof_fallback( &stream_proof_stage, &stream_proof_error ) )
+            {
+                char message[ 160 ]{ };
+                atl::format( message, sizeof( message ),
+                             ATLAS_XORSTR( "Atlas is visible on stream. Overlay failed at stage %u, error %u (0x%X)." ).get( ),
+                             stream_proof_stage, stream_proof_error, stream_proof_error );
+                push_notification( notify_kind_t::warning, ICON_EYE, ATLAS_XORSTR_STATIC( "Stream proof" ), message );
+            }
+        }
+
+        g_input.end_frame( );
+    }
+
+    return g_hooks.m_present.stdcall< i32 >( device, src_rect, dest_rect, hwnd_override, dirty_region );
+}
+
+i32 ATLAS_STDCALL hkReset(
+    void                                *device,
+    render::d3d9::D3DPRESENT_PARAMETERS *present_params )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_reset.stdcall< i32 >( device, present_params );
+    }
+
+    // FIXME: Hoku; This isn't correct at all. But until we get a proper pre/post-reset API call in render, this is what we have to do for now.
+    g_esp_builder.on_device_lost( );
+    g_chams.on_device_lost( );
+    g_model_render.on_device_lost( );
+    g_render.shutdown( );
+
+    const auto status{ g_hooks.m_reset.stdcall< i32 >( device, present_params ) };
+    if ( status >= render::d3d9::D3D_OK )
+    {
+        g_render.init( );
+    }
+
+    return status;
+}
+
+CUserCmd *ATLAS_THISCALL hkGetUserCmd(
+    CInput *thisptr,
+    i32     sequence_number )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_get_usercmd.thiscall< CUserCmd * >( thisptr, sequence_number );
+    }
+
+    return &thisptr->m_pCommands[ sequence_number % MULTIPLAYER_BACKUP ];
+}
+
+void ATLAS_THISCALL hkCreateMove(
+    CInput *thisptr,
+    i32     seq_number,
+    float   input_sample_frametime,
+    bool    active )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_create_move.thiscall< void >( thisptr, seq_number, input_sample_frametime, active );
+    }
+
+    ATLAS_INTEGRITY_CHECK( 0x1D5E8B42FA90C376ull );
+
+    g_cl.m_psilent_choked = false;
+    g_hooks.m_create_move.thiscall< void >( thisptr, seq_number, input_sample_frametime, active );
+    g_networking.command_created( seq_number );
+
+    g_input.suppress_binds( g_cl.game_owns_keyboard( ) );
+    g_input.begin_command( );
+
+    g_cl.m_cmd       = &thisptr->m_pCommands[ seq_number % MULTIPLAYER_BACKUP ];
+    g_cl.m_will_fire = false;
+
+    g_prediction.update( );
+    g_cl.update_throw( );
+
+    if ( !g_cl.m_cmd || !g_cl.m_local || !g_cl.m_weapon || !g_cl.m_local->IsAlive( ) )
+    {
+        g_cl.m_last_cmd = g_cl.m_cmd; // <- ?????
+        return;
+    }
+
+    g_crits.on_create_move( seq_number );
+
+    g_cl.m_cmd->random_seed = g_tf2.m_MD5_PseudoRandom.call_as< i32 >( g_cl.m_cmd->command_number ) & INT_MAX;
+    g_tf2.m_CBaseEntity_SetPredictionRandomSeed.call_as< void >( g_cl.m_cmd );
+
+    g_recorder.on_pre_prediction( );
+
+    const auto va{ g_cl.m_cmd->viewangles };
+
+    g_misc.on_pre_prediction( );
+    g_fall_damage.run( );
+
+    g_script_api.create_move_pre_pred( g_cl.m_cmd );
+
+    g_extrapolate.update_local_input( );
+
+    g_auto_rocketjmp.run( );
+
+    g_nospread.pre_predict( );
+
+    g_cl.m_will_fire = false;
+
+    g_ragebot.maintain_managed_charge( );
+
+    g_cl.apply_throw_angle( );
+
+    g_tickbase.on_pre_prediction( );
+    // switching can mutate a second weapon that is not in the preview's rollback snapshot..
+    const bool predicted{ g_cl.m_cmd->weaponselect == 0 && g_prediction.start( seq_number ) };
+    {
+        g_fakelag.think( );
+        g_anti_aim.think( );
+        g_anti_backstab.think( );
+        g_auto_vacc.run( );
+
+        if ( predicted )
+        {
+            g_script_api.create_move( g_cl.m_cmd );
+            g_misc.on_prediction( );
+            g_air_blast.run( );
+            g_auto_rocketjmp.run_predicted( );
+            g_tickbase.on_prediction( );
+        }
+    }
+    g_prediction.end( );
+
+    g_crits.run( );
+    g_auto_det.run( );
+
+    g_script_api.create_move_post_pred( g_cl.m_cmd );
+    g_holdaim_mgr.on_create_move( );
+
+    g_cl.manage_psilent( );
+
+    g_networking.gate_send( );
+    g_cl.apply_throw_angle( );
+
+    g_cl.fix_movement( g_cl.m_cmd, va );
+    g_proj_sim.on_create_move( );
+    g_trajectory.on_create_move( );
+    g_proj_camera.on_create_move( );
+
+    g_misc.on_post_prediction( );
+
+    g_recorder.on_create_move_end( );
+
+    g_cl.m_last_cmd = g_cl.m_cmd;
+
+    if ( g_tf2.m_cl->chokedcommands >= MAX_SHIFT )
+    {
+        g_cl.m_send_packet = true;
+        DBGOUT( "Failsafe triggered!" );
+    }
+}
+
+bool ATLAS_THISCALL hkCheckInitPredictable( C_BaseEntity *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_check_init_predictable.thiscall< bool >( thisptr );
+    }
+
+    const auto datamap{ thisptr->GetPredDescMap( ) };
+    if ( datamap )
+    {
+        datamap->packed_offsets_computed = false;
+
+        // Recursively walk the inheriting datamaps and null their compute flags.
+        auto base_map{ datamap->baseMap };
+        while ( base_map != nullptr )
+        {
+            base_map->packed_offsets_computed = false;
+            base_map                          = base_map->baseMap;
+        }
+    }
+
+    const bool fresh{ !thisptr->m_pOriginalData( ) };
+    const bool result{ g_hooks.m_check_init_predictable.thiscall< bool >( thisptr ) };
+
+    if ( fresh && thisptr->m_pOriginalData( ) )
+    {
+        g_crits.on_init_predictable( thisptr );
+    }
+
+    return result;
+}
+
+i32 ATLAS_CDECL hkS_StartSound( const StartSoundParams_t &params )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_s_start_sound.ccall< i32 >( params );
+    }
+
+    // static sounds are looping ambience owned by the world
+    if ( !params.staticsound )
+    {
+        g_player_data.on_start_sound( params );
+    }
+
+    if ( g_cfg.m_misc.m_weapon_pitch != PITCH_NORM && g_misc.is_weapon_sound( params ) )
+    {
+        StartSoundParams_t pitched{ params };
+        pitched.pitch = math::clamp( params.pitch * g_cfg.m_misc.m_weapon_pitch / PITCH_NORM, 1, 255 );
+
+        return g_hooks.m_s_start_sound.ccall< i32 >( pitched );
+    }
+
+    return g_hooks.m_s_start_sound.ccall< i32 >( params );
+}
+
+void ATLAS_CDECL hkCL_Move( float accumulated_extra_samples, bool final_tick )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_cl_move.ccall< void >( accumulated_extra_samples, final_tick );
+    }
+
+    g_networking.report_cmdrate( );
+    g_networking.remove_input_delay( final_tick );
+
+    if ( g_tickbase.on_cl_move( accumulated_extra_samples, final_tick ) )
+    {
+        return;
+    }
+
+    g_networking.cl_move( accumulated_extra_samples, final_tick );
+}
+
+void ATLAS_THISCALL hkRunSimulation(
+    CPrediction  *thisptr,
+    i32           current_command,
+    float         curtime,
+    CUserCmd     *cmd,
+    C_BasePlayer *local_player )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_run_simulation.thiscall< void >( thisptr, current_command, curtime, cmd, local_player );
+    }
+
+    if ( g_tickbase.on_run_simulation( local_player, current_command ) )
+    {
+        curtime = TICKS_TO_TIME( local_player->m_nTickBase( ) );
+    }
+
+    g_crits.on_run_simulation( current_command, cmd );
+
+    local_player->m_vecPreviouslyPredictedOrigin( ) = local_player->m_vecOrigin( );
+    g_doors.pose( current_command );
+    g_anims.begin_local_command( local_player->As< C_TFPlayer * >( ), current_command, g_tickbase.seen_copies( ) );
+
+    for ( CUserCmd copy{ }; g_tickbase.next_copy( local_player, current_command, copy ); )
+    {
+        g_anims.begin_copy( );
+        g_hooks.m_run_simulation.thiscall< void >( thisptr, current_command - 1, TICKS_TO_TIME( local_player->m_nTickBase( ) ), &copy, local_player );
+        g_anims.end_copy( );
+    }
+
+    g_hooks.m_run_simulation.thiscall< void >( thisptr, current_command, curtime, cmd, local_player );
+    g_crits.on_run_simulation( -1, nullptr );
+    g_doors.on_command_predicted( current_command, local_player );
+    g_doors.restore( );
+
+    g_compression.on_run_simulation( local_player, current_command );
+}
+
+void ATLAS_CDECL hkCL_ReadPackets( bool final_tick )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_cl_read_packets.ccall< void >( final_tick );
+    }
+
+    if ( !g_networking.should_read_packets( ) )
+    {
+        return;
+    }
+
+    g_hooks.m_cl_read_packets.ccall< void >( final_tick );
+}
+
+void ATLAS_THISCALL hkPacketStart( CClientState *thisptr, i32 incoming_sequence, i32 outgoing_acknowledged )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_packet_start.thiscall< void >( thisptr, incoming_sequence, outgoing_acknowledged );
+    }
+
+    const i32 acknowledged{ g_networking.acknowledged( outgoing_acknowledged ) };
+
+    // the resolved value is the command the engine files as acked, which is also the command the
+    // prediction error check pulls the intermediate frame for
+    g_compression.on_packet_start( acknowledged );
+
+    g_hooks.m_packet_start.thiscall< void >( thisptr, incoming_sequence, acknowledged );
+}
+
+void ATLAS_THISCALL hkSetChoked( CNetChannel *thisptr )
+{
+    g_hooks.m_net_chan_set_choked.thiscall< void >( thisptr );
+
+    if ( !g_cl.m_is_running || thisptr != g_tf2.m_cl->m_NetChannel )
+    {
+        return;
+    }
+
+    g_networking.on_choked( );
+}
+
+void ATLAS_THISCALL hkDrawModel(
+    CStudioRender      *thisptr,
+    DrawModelResults_t *results,
+    DrawModelInfo_t    *info,
+    matrix3x4          *bone_to_world,
+    float              *flex_weights,
+    float              *flex_delayed_weights,
+    const vec3         *model_origin,
+    i32                 flags )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) || g_proj_camera.drawing( ) )
+    {
+        return g_hooks.m_draw_model.thiscall< void >( thisptr, results, info, bone_to_world, flex_weights, flex_delayed_weights, model_origin, flags );
+    }
+
+    if ( g_glow.m_driving )
+    {
+        g_hooks.m_draw_model.thiscall< void >( thisptr, results, info, bone_to_world,
+                                               flex_weights, flex_delayed_weights, model_origin, flags );
+        return g_skins.draw_botkiller( thisptr, results, info, bone_to_world, model_origin, flags );
+    }
+
+    if ( g_chams.m_driving )
+    {
+        matrix3x4 *bones{ g_chams.record_bones( bone_to_world ) };
+
+        g_hooks.m_draw_model.thiscall< void >( thisptr, results, info, bones,
+                                               flex_weights, flex_delayed_weights, model_origin, flags );
+        g_model_render.note_lod( info );
+        return g_skins.draw_botkiller( thisptr, results, info, bones, model_origin, flags );
+    }
+
+    C_BaseEntity *entity{ };
+
+    if ( info && info->m_pClientEntity )
+    {
+        auto           *renderable{ static_cast< IClientRenderable * >( info->m_pClientEntity ) };
+        IClientUnknown *unknown{ renderable->GetIClientUnknown( ) };
+        entity = unknown ? unknown->GetBaseEntity( ) : nullptr;
+    }
+
+    i32  draw_flags{ flags };
+    bool glowed{ };
+
+    if ( g_esp_builder.drawing( ) || g_chams.on_draw_model( results, info, bone_to_world, draw_flags ) )
+    {
+        g_esp_builder.route( entity, info, bone_to_world, draw_flags );
+        glowed = entity && g_glow.begin_local_model( entity, *info, bone_to_world, draw_flags );
+
+        g_hooks.m_draw_model.thiscall< void >( thisptr, results, info, bone_to_world, flex_weights, flex_delayed_weights, model_origin, draw_flags );
+
+        if ( results )
+        {
+            g_model_render.note_lod( info );
+        }
+
+        g_skins.draw_botkiller( thisptr, results, info, bone_to_world, model_origin, flags );
+    }
+
+    g_chams.end_local_model( thisptr, results, info, bone_to_world, flex_weights,
+                             flex_delayed_weights, model_origin, flags );
+
+    if ( glowed )
+    {
+        return;
+    }
+
+    switch ( chams::local_model_kind( entity ) )
+    {
+        case config::LOCAL_MODEL_VIEWMODEL:
+            g_glow.render_local_model( entity, g_cfg.m_glow.m_viewmodel, thisptr, results, info,
+                                       bone_to_world, flex_weights, flex_delayed_weights,
+                                       model_origin, flags );
+            break;
+
+        case config::LOCAL_MODEL_WEAPON:
+            g_glow.render_local_model( entity, g_cfg.m_glow.m_weapon, thisptr, results, info,
+                                       bone_to_world, flex_weights, flex_delayed_weights,
+                                       model_origin, flags );
+            break;
+
+        default: break;
+    }
+}
+
+void ATLAS_THISCALL hkInternalDrawModel(
+    void                        *thisptr,
+    const DrawModelInfo_t       &info,
+    const StudioRenderContext_t &context,
+    matrix3x4                   *bone_to_world,
+    const FlexWeights_t         &flex,
+    i32                          flags )
+{
+    const i32 engine_flags{ flags & ~model_render::ROUTE_MASK };
+
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_internal_draw_model.thiscall< void >( thisptr, &info, &context, bone_to_world, &flex, engine_flags );
+    }
+
+    if ( ( flags & model_render::ROUTE_TAKEN_OVER ) && g_model_render.draw_in_place( info, flags ) )
+    {
+        return;
+    }
+
+    g_hooks.m_internal_draw_model.thiscall< void >( thisptr, &info, &context, bone_to_world, &flex, engine_flags );
+
+    if ( flags & model_render::ROUTE_ENGINE_BASE )
+    {
+        g_model_render.draw_in_place( info, flags );
+    }
+}
+
+void ATLAS_THISCALL hkDrawNoZBufferTranslucentRenderables( void *thisptr )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) || g_proj_camera.drawing( ) )
+    {
+        return g_hooks.m_draw_no_z_translucent.thiscall< void >( thisptr );
+    }
+
+    g_model_render.finish_view( );
+    g_hooks.m_draw_no_z_translucent.thiscall< void >( thisptr );
+}
+
+void ATLAS_THISCALL hkOverrideView( ClientModeShared *thisptr, CViewSetup *setup )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_override_view.thiscall< void >( thisptr, setup );
+    }
+
+    const vec3 eye{ setup ? setup->origin : vec3{ } };
+    g_hooks.m_override_view.thiscall< void >( thisptr, setup );
+
+    // g_viewmodel.on_override_view( setup );
+    g_misc.on_override_view( setup, eye );
+}
+
+void ATLAS_THISCALL hkCalcViewModelView(
+    C_BaseEntity *thisptr,
+    C_BaseEntity *owner,
+    vec3         &eye_position,
+    vec3         &eye_angles )
+{
+
+    // fixes sway viewmodels going schizo with AA
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) || g_tf2.m_prediction->m_bInPrediction )
+    {
+        return g_hooks.m_calc_view_model_view.thiscall< void >( thisptr, owner, &eye_position, &eye_angles );
+    }
+
+    g_viewmodel.on_calc_view( eye_position, eye_angles );
+
+    g_hooks.m_calc_view_model_view.thiscall< void >( thisptr, owner, &eye_position, &eye_angles );
+}
+
+f32 ATLAS_CDECL hkCalcViewModelBobHelper( C_BasePlayer *player, BobState_t *state )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_calc_view_model_bob_helper.thiscall< float >( player, state );
+    }
+
+    const f32 result{ g_hooks.m_calc_view_model_bob_helper.thiscall< float >( player, state ) };
+
+    g_viewmodel.scale_bob( state );
+
+    return result;
+}
+
+bool ATLAS_THISCALL hkShouldFlipViewModel( C_BaseViewModel *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_should_flip_view_model.thiscall< bool >( thisptr );
+    }
+
+    return g_cl.m_vm_flipped = g_hooks.m_should_flip_view_model.thiscall< bool >( thisptr );
+}
+
+void ATLAS_CDECL hkHudCrosshairGetDrawPosition( f32 *x, f32 *y, bool *behind_camera, vec3 *angle_offset )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_hud_crosshair_get_draw_position.ccall< void >( x, y, behind_camera, angle_offset );
+    }
+
+    vec2 screen{ };
+    if ( !g_ragebot.crosshair_position( screen ) )
+    {
+        return g_hooks.m_hud_crosshair_get_draw_position.ccall< void >( x, y, behind_camera, angle_offset );
+    }
+
+    *x             = screen.x;
+    *y             = screen.y;
+    *behind_camera = false;
+}
+
+void ATLAS_THISCALL hkAvoidPlayers( C_TFPlayer *thisptr, CUserCmd *cmd )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_avoid_players.thiscall< void >( thisptr, cmd );
+    }
+
+    if ( g_cfg.m_misc.m_removals[ config::REMOVAL_TEAM_PUSH ] )
+    {
+        return;
+    }
+
+    g_hooks.m_avoid_players.thiscall< void >( thisptr, cmd );
+}
+
+float ATLAS_THISCALL hkGetClientInterpAmount( )
+{
+    return 0.0f;
+}
+
+float ATLAS_THISCALL hkGetViewModelFOV( ClientModeShared *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_get_view_model_fov.thiscall< float >( thisptr );
+    }
+
+    return g_hooks.m_get_view_model_fov.thiscall< float >( thisptr );
+}
+
+bool ATLAS_THISCALL hkDoPostScreenSpaceEffects( ClientModeShared *thisptr, const CViewSetup *setup )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) || g_proj_camera.drawing( ) )
+    {
+        return g_hooks.m_do_post_screen_space_effects.thiscall< bool >( thisptr, setup );
+    }
+
+    g_model_render.end_scene( );
+
+    {
+        g_chams.render_main( );
+        g_glow.render_main( );
+    }
+
+    if ( g_cfg.m_misc.m_removals[ config::REMOVAL_POST_FX ] )
+    {
+        return false;
+    }
+
+    return g_hooks.m_do_post_screen_space_effects.thiscall< bool >( thisptr, setup );
+}
+
+void ATLAS_THISCALL hkLevelInitPreEntity( CHLClient *thisptr, const char *map_name )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_level_init_pre_entity.thiscall< void >( thisptr, map_name );
+    }
+
+    if ( !g_entity_cache.update( ) )
+    {
+        g_cl.m_is_running = false;
+        DBGOUT( "entity cache: initialization failed" );
+        return g_hooks.m_level_init_pre_entity.thiscall< void >( thisptr, map_name );
+    }
+
+    g_cl.m_has_been_in_game_and_alive_once = false;
+    g_chams.on_level_init( );
+    g_splash.clear( );
+    g_glow.on_level_init( );
+    g_esp_builder.on_level_init( );
+    g_weather.on_level_init( );
+    g_world_modulation.on_level_init( );
+    g_anims.clear( );
+    g_bone_mgr.clear( );
+    g_lagcomp.clear( );
+    g_resolver.clear( );
+    g_extrapolate.clear( );
+    g_holdaim_mgr.reset( );
+    g_networking.clear( );
+    g_tickbase.clear( );
+    g_prediction.shutdown( );
+    g_doors.clear( );
+    g_fake_latency.clear( );
+    g_cl.m_psilent_choked  = false;
+    g_cl.m_psilent_release = false;
+    g_compression.clear( );
+    g_crits.clear( );
+    g_player_data.on_level_shutdown( );
+    g_player_cloud.on_level_shutdown( );
+    g_auto_vacc.clear( );
+    g_auto_det.clear( );
+    g_watchdog.clear( );
+    g_player_perf.clear( );
+
+    g_fakelag.reset( );
+    g_anti_aim.reset( );
+
+    g_cl.clear_throw( );
+    g_cl.m_local    = nullptr;
+    g_cl.m_weapon   = nullptr;
+    g_cl.m_resource = nullptr;
+
+    g_script_api.level_init( );
+    g_recorder.on_level_init( map_name );
+
+    return g_hooks.m_level_init_pre_entity.thiscall< void >( thisptr, map_name );
+}
+
+void ATLAS_THISCALL hkForcedMaterialOverride( CStudioRender *thisptr, IMaterial *material, OverrideType_t override_type )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_forced_material_override.thiscall< void >( thisptr, material, override_type );
+    }
+
+    if ( g_chams.m_driving || g_glow.m_driving )
+    {
+        return;
+    }
+
+    return g_hooks.m_forced_material_override.thiscall< void >( thisptr, material, override_type );
+}
+
+void ATLAS_THISCALL hkSetColorModulation( CStudioRender *thisptr, const float *color )
+{
+    if ( !g_cl.m_is_running || !g_world_modulation.m_drawing_static_props )
+    {
+        return g_hooks.m_set_color_modulation.thiscall< void >( thisptr, color );
+    }
+
+    float modulated[ 3 ]{ };
+    g_world_modulation.modulate_static_prop( color, modulated );
+
+    return g_hooks.m_set_color_modulation.thiscall< void >( thisptr, modulated );
+}
+
+void ATLAS_THISCALL hkDrawStaticProps(
+    IStaticPropMgr     *thisptr,
+    IClientRenderable **props,
+    i32                 count,
+    bool                shadow_depth,
+    bool                draw_vcollide_wireframe )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_draw_static_props.thiscall< void >( thisptr, props, count, shadow_depth, draw_vcollide_wireframe );
+    }
+
+    g_world_modulation.m_drawing_static_props = true;
+    g_hooks.m_draw_static_props.thiscall< void >( thisptr, props, count, shadow_depth, draw_vcollide_wireframe );
+    g_world_modulation.m_drawing_static_props = false;
+}
+
+void ATLAS_FASTCALL hkFX_FireBullets(
+    C_TFWeaponBase *weapon,
+    i32             player,
+    const vec3     &origin,
+    const vec3     &angles,
+    i32             weapon_id,
+    i32             mode,
+    i32             seed,
+    float           spread,
+    float           damage,
+    bool            critical )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_fx_fire_bullets.fastcall< void >( weapon, player, &origin, &angles, weapon_id, mode,
+                                                           seed, spread, damage, critical );
+    }
+
+    if ( g_nospread.synced( ) && g_tf2.m_prediction->m_bFirstTimePredicted && player == g_tf2.m_engine->GetLocalPlayer( ) )
+    {
+        seed = g_nospread.seed( ) & 255;
+    }
+
+    if ( player != g_tf2.m_engine->GetLocalPlayer( ) )
+    {
+        g_watchdog.on_fire_bullets( player );
+    }
+
+    g_hooks.m_fx_fire_bullets.fastcall< void >( weapon, player, &origin, &angles, weapon_id, mode,
+                                                seed, spread, damage, critical );
+    if ( g_prediction.m_is_active && weapon == g_cl.m_weapon && player == g_tf2.m_engine->GetLocalPlayer( ) )
+    {
+        // this shared bullet path calls server ::NoteWeaponFired;
+        // ::NoteWeaponFired stores pl.v_angle, which means, bingo!
+        vec3 local_angles{ };
+        g_hooks.m_get_local_view_angles.thiscall< void >( g_tf2.m_prediction, &local_angles );
+        g_holdaim_mgr.lock( local_angles );
+    }
+}
+
+void ATLAS_FASTCALL hkFireBullet(
+    C_TFPlayer              *thisptr,
+    C_TFWeaponBase          *weapon,
+    const FireBulletsInfo_t &info,
+    bool                     do_effects,
+    i32                      damage_type,
+    i32                      custom_damage_type )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_fire_bullet.thiscall< void >( thisptr, weapon, &info, do_effects, damage_type, custom_damage_type );
+    }
+
+    g_tracers.begin_bullet( thisptr, weapon );
+
+    g_hooks.m_fire_bullet.thiscall< void >( thisptr, weapon, &info, do_effects, damage_type, custom_damage_type );
+
+    g_tracers.end_bullet( info );
+}
+
+void ATLAS_FASTCALL hkUTIL_ParticleTracer(
+    const char *effect,
+    const vec3 &start,
+    const vec3 &end,
+    i32         entity_index,
+    i32         attachment,
+    bool        whiz )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_util_particle_tracer.fastcall< void >( effect, &start, &end, entity_index,
+                                                                attachment, whiz );
+    }
+
+    if ( g_tracers.owns_particle( ) )
+    {
+        return;
+    }
+
+    g_hooks.m_util_particle_tracer.fastcall< void >( effect, &start, &end, entity_index, attachment, whiz );
+}
+
+bool ATLAS_THISCALL hkDispatchUserMessage( CHLClient *thisptr, i32 msg_type, bf_read &msg_data )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_dispatch_user_message.thiscall< bool >( thisptr, msg_type, &msg_data );
+    }
+
+    // TODO: Remove me if this breaks nospread.
+    const auto buf_data{ reinterpret_cast< const char * >( msg_data.m_pData ) };
+    msg_data.Seek( 0 );
+
+    switch ( msg_type )
+    {
+        case VoteStart:
+        {
+            g_event_notifiers.on_dispatch_user_message( msg_data );
+            break;
+        }
+
+        case TextMsg:
+        {
+            if ( g_player_perf.on_text_message( msg_data ) )
+            {
+                return true;
+            }
+
+            break;
+        }
+
+        case VGUIMenu:
+        {
+            // Remove the annoying MOTD popups some servers do.
+            if ( HASH_RT( buf_data ) == HASH_CT( "info" ) &&
+                 g_cfg.m_misc.m_removals[ config::REMOVAL_MOTD ] == true )
+            {
+                g_tf2.m_engine->ClientCmd_Unrestricted( ATLAS_XORSTR( "closedwelcomemenu" ).get( ) );
+                return true;
+            }
+
+            break;
+        }
+
+        case Shake:
+        case Rumble:
+        case Fade: return g_cfg.m_misc.m_removals[ config::REMOVAL_OVERLAYS ] == true ? true : g_hooks.m_dispatch_user_message.thiscall< bool >( thisptr, msg_type, &msg_data );
+
+        default: break;
+    }
+
+    return g_hooks.m_dispatch_user_message.thiscall< bool >( thisptr, msg_type, &msg_data );
+}
+
+bool ATLAS_THISCALL hkFireEventClientSide( IGameEventManager2 *thisptr, IGameEvent *event )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_fire_event_client_side.thiscall< bool >( thisptr, event );
+    }
+
+    if ( event )
+    {
+        if ( HASH_RT( event->GetName( ) ) == HASH_CT( "party_chat" ) && g_party_network.on_party_chat( event ) )
+        {
+            thisptr->FreeEvent( event );
+            return false;
+        }
+
+        if ( g_cfg.m_streamer_mode.m_enabled )
+        {
+            const auto event_name{ HASH_RT( event->GetName( ) ) };
+            switch ( event_name )
+            {
+                case HASH_CT( "player_team" ):
+                case HASH_CT( "player_connect" ):
+                case HASH_CT( "player_connect_client" ):
+                case HASH_CT( "player_disconnect" ):
+                {
+                    event->SetString( ATLAS_XORSTR( "name" ).get( ), ATLAS_XORSTR( "Player" ).get( ) );
+                    break;
+                }
+
+                default: break;
+            }
+        }
+
+        g_skins.on_event( event );
+    }
+
+    return g_hooks.m_fire_event_client_side.thiscall< bool >( thisptr, event );
+}
+
+i32 ATLAS_THISCALL hkGetModelIndex( CModelInfoClient *thisptr, const char *name )
+{
+    if ( !g_cl.m_is_running || !name )
+    {
+        return g_hooks.m_get_model_index.thiscall< i32 >( thisptr, name );
+    }
+
+    const i32 index{ g_hooks.m_get_model_index.thiscall< i32 >( thisptr, name ) };
+
+    if ( index != -1 || !name )
+    {
+        return index;
+    }
+
+    return g_skins.index_for_model( name );
+}
+
+float ATLAS_THISCALL hkApplyAttributeFloatWrapper( void *thisptr, float value, C_BaseEntity *initiator, const char *hook, void *items )
+{
+    if ( !g_cl.m_is_running || !initiator || !hook )
+    {
+        return g_hooks.m_apply_attribute_float_wrapper.thiscall< float >( thisptr, value, initiator, hook, items );
+    }
+
+    if ( !items && initiator && hook )
+    {
+        if ( float answer{ }; g_skins.attribute_hook( initiator, hook, answer ) )
+        {
+            return answer;
+        }
+    }
+
+    return g_hooks.m_apply_attribute_float_wrapper.thiscall< float >( thisptr, value, initiator, hook, items );
+}
+
+i32 ATLAS_THISCALL hkAttribHookValueInt( i32 value, const char *hook, C_BaseEntity *initiator, void *items, bool global_string )
+{
+    if ( !g_cl.m_is_running || !hook || !initiator )
+    {
+        return g_hooks.m_attrib_hook_value_int.thiscall< i32 >( value, hook, initiator, items, global_string );
+    }
+
+    if ( !items && initiator && hook )
+    {
+        if ( float answer{ }; g_skins.attribute_hook( initiator, hook, answer ) )
+        {
+            return static_cast< i32 >( answer );
+        }
+    }
+
+    return g_hooks.m_attrib_hook_value_int.thiscall< i32 >( value, hook, initiator, items, global_string );
+}
+
+bool ATLAS_THISCALL hkTFIsHolidayActive( i32 holiday )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_tf_is_holiday_active.thiscall< bool >( holiday );
+    }
+
+    if ( g_skins.holiday_active( holiday ) )
+    {
+        return true;
+    }
+
+    return g_hooks.m_tf_is_holiday_active.thiscall< bool >( holiday );
+}
+
+bool ATLAS_THISCALL hkGameRulesIsHolidayActive( C_TFGameRules *thisptr, i32 holiday )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_game_rules_is_holiday_active.thiscall< bool >( thisptr, holiday );
+    }
+
+    if ( g_skins.holiday_active( holiday ) )
+    {
+        return true;
+    }
+
+    return g_hooks.m_game_rules_is_holiday_active.thiscall< bool >( thisptr, holiday );
+}
+
+void ATLAS_THISCALL hkSheenOnBind( CProxyAnimatedWeaponSheen *thisptr, void *entity )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_sheen_on_bind.thiscall< void >( thisptr, entity );
+    }
+
+    g_hooks.m_sheen_on_bind.thiscall< void >( thisptr, entity );
+    g_skins.tint_sheen( thisptr );
+}
+
+void ATLAS_THISCALL hkThirdPersonManagerUpdate( void *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_third_person_manager_update.thiscall< void >( thisptr );
+    }
+}
+
+void ATLAS_THISCALL hkMatchInviteOnTick( void *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_match_invite_on_tick.thiscall< void >( thisptr );
+    }
+
+    if ( g_cfg.m_queue.m_delay_join )
+    {
+        f64      &deadline{ *reinterpret_cast< f64 * >( reinterpret_cast< uptr >( thisptr ) + 0x268 ) };
+        const f64 now{ g_tf2.m_engine->Plat_FloatTime( ) };
+
+        if ( deadline != 0.0 && deadline < now + 11.0 )
+        {
+            deadline = now + g_cfg.m_queue.m_delay_join_time;
+        }
+    }
+
+    g_hooks.m_match_invite_on_tick.thiscall< void >( thisptr );
+}
+
+void ATLAS_THISCALL hkEmitSound( void *thisptr, void *filter, i32 entity_index, const EmitSound_t *params )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_emit_sound.thiscall< void >( thisptr, filter, entity_index, params );
+    }
+
+    if ( params && ( g_skins.mutes_sound( entity_index, params->m_pSoundName ) ||
+                     g_misc.mutes_footstep( params->m_pSoundName ) ) )
+    {
+        return;
+    }
+
+    g_hooks.m_emit_sound.thiscall< void >( thisptr, filter, entity_index, params );
+}
+
+// this is where the client picks gibs over a ragdoll and builds the corpse
+// from its flags, and they are rewritten right before it
+void ATLAS_THISCALL hkRagdollOnDataChanged( IClientNetworkable *thisptr, DataUpdateType_t type )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_ragdoll_on_data_changed.thiscall< void >( thisptr, type );
+    }
+
+    if ( type == DATA_UPDATE_CREATED )
+    {
+        if ( C_BaseEntity * entity{ thisptr->GetIClientUnknown( )->GetBaseEntity( ) } )
+        {
+            g_skins.on_ragdoll_created( entity->As< C_TFRagdoll * >( ) );
+        }
+    }
+
+    g_hooks.m_ragdoll_on_data_changed.thiscall< void >( thisptr, type );
+}
+
+class store_restore_ragdoll_vars
+{
+public:
+    store_restore_ragdoll_vars( )
+    {
+        m_old_fade_time      = g_tf2.cl_ragdoll_fade_time->GetFloat( );
+        m_old_force_fade     = g_tf2.cl_ragdoll_forcefade->GetInt( );
+        m_old_physics_enable = g_tf2.cl_ragdoll_physics_enable->GetInt( );
+    }
+
+    ~store_restore_ragdoll_vars( )
+    {
+        g_tf2.cl_ragdoll_fade_time->SetValue( m_old_fade_time );
+        g_tf2.cl_ragdoll_forcefade->SetValue( m_old_force_fade );
+        g_tf2.cl_ragdoll_physics_enable->SetValue( m_old_physics_enable );
+    }
+
+private:
+    f32 m_old_fade_time{ };
+    i32 m_old_force_fade{ };
+    i32 m_old_physics_enable{ };
+};
+
+void ATLAS_THISCALL hkCreateTFRagdoll( C_TFRagdoll *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_create_tf_ragdoll.thiscall< void >( thisptr );
+    }
+
+    if ( !g_skins.on_ragdoll_created( thisptr ) )
+    {
+        return g_hooks.m_create_tf_ragdoll.thiscall< void >( thisptr );
+    }
+
+    {
+        store_restore_ragdoll_vars scope{ };
+        g_tf2.cl_ragdoll_fade_time->SetValue( 30.f );
+        g_tf2.cl_ragdoll_forcefade->SetValue( 0 );
+        g_tf2.cl_ragdoll_physics_enable->SetValue( 1 );
+
+        g_hooks.m_create_tf_ragdoll.thiscall< void >( thisptr );
+    }
+}
+
+void ATLAS_THISCALL hkClientShutdown( CHLClient *thisptr )
+{
+    g_script_api.shutdown( );
+    g_session.shutdown( );
+    g_cl.m_is_running = false;
+    if ( !g_entity_cache.shutdown( ) )
+    {
+        DBGOUT( "entity cache: failed to unregister the listener" );
+    }
+    g_hooks.m_client_shutdown.thiscall< void >( thisptr );
+}
+
+void ATLAS_THISCALL hkLevelShutdown( CHLClient *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        g_hooks.m_level_shutdown.thiscall< void >( thisptr );
+        g_entity_cache.on_level_shutdown( );
+        return;
+    }
+
+    g_cl.m_has_been_in_game_and_alive_once = false;
+    g_esp.on_level_shutdown( );
+    g_hitmarker.clear( );
+    g_prediction.shutdown( );
+    g_doors.clear( );
+    g_skins.on_level_shutdown( );
+    g_chams.on_level_shutdown( );
+    g_glow.on_level_shutdown( );
+    g_proj_camera.on_level_shutdown( );
+    g_trajectory.clear( );
+    g_projectile_warning.on_level_shutdown( );
+    g_esp_builder.on_level_shutdown( );
+    g_tickbase.clear( );
+    g_fake_latency.clear( );
+    g_networking.clear( );
+    g_nospread.clear( );
+    g_holdaim_mgr.reset( );
+    g_weather.on_level_shutdown( );
+    g_radio.on_level_shutdown( );
+    g_soundboard.on_level_shutdown( );
+    g_crits.clear( );
+    g_player_data.on_level_shutdown( );
+    g_player_cloud.on_level_shutdown( );
+    g_auto_vacc.clear( );
+    g_auto_det.clear( );
+    g_watchdog.clear( );
+    g_player_perf.clear( );
+    g_proj_sim.shutdown( );
+    g_tracers.clear( );
+    g_medbot.on_level_shutdown( );
+    g_recorder.on_level_shutdown( );
+    g_script_api.level_shutdown( );
+    g_world_modulation.on_level_shutdown( );
+
+    g_fakelag.reset( );
+    g_anti_aim.reset( );
+
+    g_cl.clear_throw( );
+    g_cl.m_local    = nullptr;
+    g_cl.m_weapon   = nullptr;
+    g_cl.m_resource = nullptr;
+
+    g_hooks.m_level_shutdown.thiscall< void >( thisptr );
+    g_entity_cache.on_level_shutdown( );
+}
+
+void ATLAS_THISCALL hkFrameStageNotify( CHLClient *thisptr, ClientFrameStage_t stage )
+{
+    g_session.poll( );
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_frame_stage_notify.thiscall< void >( thisptr, stage );
+    }
+    ATLAS_INTEGRITY_CHECK( 0x3A70C1F5E28B4D69ull );
+
+    if ( !g_entity_cache.update( ) )
+    {
+        g_cl.m_is_running = false;
+        DBGOUT( "entity cache: update failed before frame stage %i", static_cast< i32 >( stage ) );
+        return g_hooks.m_frame_stage_notify.thiscall< void >( thisptr, stage );
+    }
+
+    switch ( stage )
+    {
+        case FRAME_NET_UPDATE_POSTDATAUPDATE_START:
+        {
+            g_skins.think( );
+            break;
+        }
+
+        case FRAME_NET_UPDATE_POSTDATAUPDATE_END:
+        {
+            g_compression.restore( );
+            break;
+        }
+
+        default: break;
+    }
+
+    g_hooks.m_frame_stage_notify.thiscall< void >( thisptr, stage );
+
+    if ( !g_entity_cache.update( ) )
+    {
+        g_cl.m_is_running = false;
+        DBGOUT( "entity cache: update failed after frame stage %i", static_cast< i32 >( stage ) );
+        return;
+    }
+
+    switch ( stage )
+    {
+        case FRAME_NET_UPDATE_POSTDATAUPDATE_END:
+        {
+            g_cl.update_local_data( );
+            g_player_data.hold_stale_simulation_times( );
+
+            if ( !g_cl.m_has_been_in_game_and_alive_once && client::is_in_game_and_alive( ) )
+            {
+                g_cl.m_has_been_in_game_and_alive_once = true;
+            }
+
+            if ( g_cl.m_has_been_in_game_and_alive_once )
+            {
+                g_cl.m_target_config_profile = client::get_profile( );
+            }
+
+            g_prediction.on_post_data_update( );
+            g_anims.on_post_data_update( );
+            g_doors.on_post_data_update( );
+            g_tickbase.on_post_data_update( );
+            g_player_data.update( );
+            g_move_sim.observe_air( );
+            g_esp.think( );
+            break;
+        }
+
+        case FRAME_NET_UPDATE_END:
+        {
+            g_cl.refresh_party( );
+            g_cl.refresh_lobby_parties( );
+            g_party_network.think( );
+            g_auto_vacc.on_network_update( );
+            g_auto_det.on_network_update( );
+            g_projectile_warning.on_network_update( );
+            g_crits.on_network_update( );
+            g_watchdog.on_network_update( );
+            g_resolver.think( );
+
+            if ( !g_anims.defer_update( ) )
+            {
+                g_anims.update_others( );
+                g_lagcomp.update( );
+            }
+
+            break;
+        }
+
+        case FRAME_RENDER_START:
+        {
+            g_model_render.begin_frame( );
+            g_input.seal_batch( );
+            g_weather.think( );
+            g_skybox.think( );
+            g_world_modulation.think( );
+            break;
+        }
+
+        case FRAME_RENDER_END:
+        {
+            g_model_render.end_frame( );
+            break;
+        }
+
+        default: break;
+    }
+
+    g_script_api.frame_stage( stage );
+}
+
+void ATLAS_THISCALL hkValidateUserCmd( CInput *thisptr, CUserCmd *ucmd, i32 seq_number )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_validate_ucmd.thiscall< void >( thisptr, ucmd, seq_number );
+    }
+}
+
+void *ATLAS_THISCALL hkGetModel( IClientRenderable *thisptr, i32 model_index )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_get_model.thiscall< void * >( thisptr, model_index );
+    }
+
+    if ( void *model{ g_skins.model_for_index( model_index ) } )
+    {
+        return model;
+    }
+
+    if ( void *model{ g_esp_builder.model_for_index( model_index ) } )
+    {
+        return model;
+    }
+
+    return g_hooks.m_get_model.thiscall< void * >( thisptr, model_index );
+}
+
+void *ATLAS_THISCALL hkLightcacheGetDynamic(
+    void             *thisptr,
+    vec3             *origin,
+    lighting_state_t *state,
+    void             *unknown,
+    i32               flags,
+    bool              skip )
+{
+    if ( !g_cl.m_is_running || g_tf2.m_engine->IsInGame( ) )
+    {
+        return g_hooks.m_lightcache_get_dynamic.thiscall< void * >( thisptr, origin, state, unknown, flags, skip );
+    }
+
+    if ( !state )
+    {
+        return nullptr;
+    }
+
+    for ( i32 index{ }; index < 6; ++index )
+    {
+        state->m_box_color[ index ] = vec3{ 0.5f, 0.5f, 0.5f };
+    }
+
+    for ( i32 index{ }; index < 4; ++index )
+    {
+        state->m_local_light[ index ] = nullptr;
+    }
+
+    state->m_light_count = 0;
+    return nullptr;
+}
+
+void *ATLAS_THISCALL hkMinigunOnNewModel( C_TFMinigun *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_minigun_on_new_model.thiscall< void * >( thisptr );
+    }
+
+    const float current{ thisptr->m_flBarrelCurrentVelocity( ) };
+    const float target{ thisptr->m_flBarrelTargetVelocity( ) };
+    const float angle{ thisptr->m_flBarrelAngle( ) };
+
+    const auto original{ g_hooks.m_minigun_on_new_model.thiscall< void * >( thisptr ) };
+
+    thisptr->m_flBarrelCurrentVelocity( ) = current;
+    thisptr->m_flBarrelTargetVelocity( )  = target;
+    thisptr->m_flBarrelAngle( )           = angle;
+
+    return original;
+}
+
+void ATLAS_THISCALL hkSetDormant( C_BaseEntity *thisptr, bool dormant )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_set_dormant.thiscall< void >( thisptr, dormant );
+    }
+
+    g_player_data.on_set_dormant( thisptr, dormant );
+
+    g_hooks.m_set_dormant.thiscall< void >( thisptr, dormant );
+}
+
+void *ATLAS_THISCALL hkUpdateVisibility( C_BaseEntity *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_update_visibility.thiscall< void * >( thisptr );
+    }
+
+    if ( thisptr && thisptr == g_esp_builder.entity( ) )
+    {
+        return nullptr;
+    }
+
+    return g_hooks.m_update_visibility.thiscall< void * >( thisptr );
+}
+
+bool ATLAS_THISCALL hkSetupBones(
+    IClientRenderable *thisptr,
+    matrix3x4         *bone_to_world,
+    i32                max_bones,
+    i32                bone_mask,
+    float              current_time )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_setup_bones.thiscall< bool >( thisptr, bone_to_world, max_bones, bone_mask, current_time );
+    }
+
+    C_BaseEntity *entity{ reinterpret_cast< C_BaseEntity * >( reinterpret_cast< uptr >( thisptr ) - 0x8 ) };
+    if ( g_esp_builder.on_setup_bones( entity, bone_to_world, max_bones ) )
+    {
+        return true;
+    }
+
+    ClientClass *client_class{ entity->GetClientClass( ) };
+
+    if ( client_class &&
+         client_class->GetClassID( ) == ETFClassID::CTFPlayer &&
+         g_bone_mgr.player_setup( entity->As< C_TFPlayer * >( ), bone_to_world, max_bones, bone_mask ) )
+    {
+        return true;
+    }
+
+    return g_hooks.m_setup_bones.thiscall< bool >( thisptr, bone_to_world, max_bones, bone_mask, current_time );
+}
+
+void ATLAS_THISCALL hkAnimStateDoAnimationEvent( CTFPlayerAnimState *thisptr, i32 event, i32 data )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_anim_state_do_animation_event.thiscall< void >( thisptr, event, data );
+    }
+
+    thisptr->ClearStaleSwimming( );
+    C_BaseEntity *player{ thisptr->m_pEntity( ) };
+    if ( player && player == g_cl.m_local )
+    {
+        g_anims.record_local_event( g_cl.m_local, event, data );
+    }
+
+    if ( !player || player == g_cl.m_local || g_anims.replay_velocity( player ) ||
+         player->As< C_TFPlayer * >( )->InCond( TF_COND_TAUNTING ) )
+    {
+        return g_hooks.m_anim_state_do_animation_event.thiscall< void >( thisptr, event, data );
+    }
+
+    // a packet's events wait for the replay of its batch, which runs each on the command it belongs to
+    if ( !g_anims.queue_event( player, event, data ) )
+    {
+        g_anims.play_event( thisptr, player, event, data );
+    }
+}
+
+bool ATLAS_THISCALL hkBaseAnimatingInterpolate( C_BaseEntity *thisptr, float current_time )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_base_animating_interpolate.thiscall< bool >( thisptr, current_time );
+    }
+
+    if ( ClientClass *client_class{ thisptr->GetClientClass( ) }; client_class->GetClassID( ) == ETFClassID::CTFPlayer )
+    {
+        if ( thisptr->entindex( ) != g_tf2.m_engine->GetLocalPlayer( ) )
+        {
+            return true;
+        } else
+        {
+            if ( !g_interp_mgr.should_interpolate_local( ) )
+            {
+                return true;
+            }
+        }
+    }
+
+    return g_hooks.m_base_animating_interpolate.thiscall< bool >( thisptr, current_time );
+}
+
+void ATLAS_FASTCALL hkUpdateClientSideAnimation( C_TFPlayer *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_update_client_side_animation.thiscall< void >( thisptr );
+    }
+
+    if ( thisptr->InCond( TF_COND_TAUNTING ) )
+    {
+        g_hooks.m_update_client_side_animation.thiscall< void >( thisptr );
+    }
+}
+
+void ATLAS_FASTCALL hkBuildTransformations(
+    C_TFPlayer      *thisptr,
+    CStudioHdr      *studio,
+    vec3            *pos,
+    quaternion      *q,
+    const matrix3x4 *camera_transform,
+    i32              bone_mask,
+    void            *bone_computed )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_build_transformations.thiscall< void >(
+            thisptr,
+            studio,
+            pos,
+            q,
+            camera_transform,
+            bone_mask,
+            bone_computed );
+    }
+
+    const i32 flags{ thisptr->m_fFlags( ) };
+    thisptr->m_fFlags( ) &= ~FL_DUCKING;
+    g_hooks.m_build_transformations.thiscall< void >(
+        thisptr,
+        studio,
+        pos,
+        q,
+        camera_transform,
+        bone_mask,
+        bone_computed );
+    thisptr->m_fFlags( ) = flags;
+}
+
+void ATLAS_FASTCALL hkComputeAimYaw( CTFPlayerAnimState *thisptr, void *studio )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_compute_aim_yaw.thiscall< void >( thisptr, studio );
+    }
+
+    g_hooks.m_compute_aim_yaw.thiscall< void >( thisptr, studio );
+
+    C_BaseEntity *player{ thisptr->m_pEntity( ) };
+
+    if ( !player )
+    {
+        return;
+    }
+
+    vec3 angles{ player->GetAbsAngles( ) };
+    angles.y = thisptr->m_flCurrentFeetYaw( ); // server does it, we do it as well.
+
+    g_tf2.m_CBaseEntity_SetAbsAngles.call_as< void, C_BaseEntity *, const vec3 & >( player, angles );
+}
+
+void ATLAS_FASTCALL hkMaintainSequenceTransitions(
+    void       *thisptr,
+    void       *setup,
+    float       cycle,
+    vec3       *pos,
+    quaternion *q )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_maintain_sequence_transitions.thiscall< void >( thisptr, setup, cycle, pos, q );
+    }
+}
+
+void ATLAS_FASTCALL hkCheckForSequenceChange(
+    void       *thisptr,
+    CStudioHdr *studio,
+    i32         sequence,
+    bool        force_new_sequence,
+    bool        interpolate )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_check_for_sequence_change.thiscall< void >( thisptr, studio, sequence, force_new_sequence, interpolate );
+    }
+
+    g_hooks.m_check_for_sequence_change.thiscall< void >( thisptr, studio, sequence, force_new_sequence, false );
+}
+
+void ATLAS_FASTCALL hkSetSequence( C_BaseAnimating *thisptr, i32 sequence )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_set_sequence.thiscall< void >( thisptr, sequence );
+    }
+
+    const auto cc{ thisptr->GetClientClass( ) };
+    if ( !cc )
+    {
+        return g_hooks.m_set_sequence.thiscall< void >( thisptr, sequence );
+    }
+
+    if ( cc->GetClassID( ) != ETFClassID::CTFPlayer )
+    {
+        return g_hooks.m_set_sequence.thiscall< void >( thisptr, sequence );
+    }
+
+    // CBaseAnimating::ResetSequence reads the loop flag ResetSequenceInfo cached, not the current sequence's: SetModel's
+    // SetSequence( 0 ) on a respawn leaves it on the last life's run, so the server carries the cycle into the new class.
+    if ( thisptr->m_nSequence( ) != sequence && !thisptr->m_bSequenceLoops( ) )
+    {
+        thisptr->m_flCycle( ) = 0.0f;
+    }
+
+    g_hooks.m_set_sequence.thiscall< void >( thisptr, sequence );
+}
+
+i32 ATLAS_FASTCALL hkBaseInterpolatePart1(
+    C_BaseEntity *thisptr,
+    float        *current_time,
+    vec3         *old_origin,
+    vec3         *old_angles,
+    vec3         *old_velocity,
+    i32          *no_more_changes )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_base_interpolate_part1.thiscall< i32 >( thisptr, current_time, old_origin, old_angles, old_velocity, no_more_changes );
+    }
+
+    if ( g_tickbase.recharging( ) || g_tickbase.shifting( ) )
+    {
+        *no_more_changes = 1;
+        return INTERPOLATE_STOP;
+    }
+
+    return g_hooks.m_base_interpolate_part1.thiscall< i32 >( thisptr, current_time, old_origin, old_angles, old_velocity, no_more_changes );
+}
+
+void ATLAS_FASTCALL hkInterpolateServerEntities( )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_interpolate_server_entities.ccall< void >( );
+    }
+
+    if ( g_tickbase.recharging( ) || g_tickbase.shifting( ) )
+    {
+        if ( bool *flag{ g_tf2.m_interpolate_flag.get_as< bool * >( ) } )
+        {
+            *flag = false; // fuck you
+        }
+
+        return;
+    }
+
+    g_hooks.m_interpolate_server_entities.ccall< void >( );
+}
+
+bool ATLAS_THISCALL hkIsPaused( CClientState *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_client_state_is_paused.thiscall< bool >( thisptr );
+    }
+
+    if ( reinterpret_cast< uptr >( __builtin_return_address( 0 ) ) == g_tf2.m_enable_extrapolation_retaddr.get_raw( ) )
+    {
+        return true;
+    }
+
+    return g_hooks.m_client_state_is_paused.thiscall< bool >( thisptr );
+}
+
+f32 ATLAS_THISCALL hkGetTime( CClientState *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_client_state_get_time.thiscall< f32 >( thisptr );
+    }
+
+    if ( reinterpret_cast< uptr >( __builtin_return_address( 0 ) ) == g_tf2.m_cl_fire_events_retaddr.get_raw( ) )
+    {
+        return FLT_MAX;
+    }
+
+    return g_hooks.m_client_state_get_time.thiscall< f32 >( thisptr );
+}
+
+bool ATLAS_THISCALL hkSendNetMsg( CNetChannel *thisptr, INetMessage &message, bool force_reliable, bool voice )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_net_chan_send_net_msg.thiscall< bool >( thisptr, &message, force_reliable, voice );
+    }
+
+    const bool result{ g_hooks.m_net_chan_send_net_msg.thiscall< bool >( thisptr, &message, force_reliable, voice ) };
+
+    if ( result && g_cfg.m_exploits.m_ping_reducer && message.GetType( ) == net_SetConVar )
+    {
+        g_networking.send_reported_cmdrate( thisptr, true );
+    }
+
+    return result;
+}
+
+void ATLAS_THISCALL hkProcessPacket( CNetChannel *thisptr, void *packet, bool has_header )
+{
+    if ( !g_cl.m_is_running || thisptr != g_tf2.m_cl->m_NetChannel )
+    {
+        return g_hooks.m_net_chan_process_packet.thiscall< void >( thisptr, packet, has_header );
+    }
+
+    const double received_time{ tick_manager::packet_time( thisptr->IsLoopback( ) ) };
+    const i32    previous_sequence{ thisptr->m_nInSequenceNr };
+    g_fake_latency.begin_packet( thisptr, has_header );
+    g_anims.begin_packet( );
+    g_hooks.m_net_chan_process_packet.thiscall< void >( thisptr, packet, has_header );
+    g_fake_latency.end_packet( thisptr, received_time );
+    const bool animation_update{ g_anims.end_packet( ) };
+
+    if ( !g_cl.m_is_running || thisptr != g_tf2.m_cl->m_NetChannel )
+    {
+        return;
+    }
+
+    if ( has_header && thisptr->m_nInSequenceNr == previous_sequence )
+    {
+        return;
+    }
+
+    g_tickbase.observe_server_tick( );
+    g_player_perf.on_packet( );
+    g_nospread.on_packet( thisptr );
+
+    if ( CEventInfo * *queue{ g_tf2.m_cl_event_queue.get_as< CEventInfo ** >( ) } )
+    {
+        for ( CEventInfo *event{ *queue }; event; event = event->m_next )
+        {
+            event->m_fire_delay = 0.0f;
+        }
+    }
+
+    g_anims.begin_events( animation_update );
+    g_tf2.m_engine->FireEvents( );
+
+    // NET_UPDATE_END is inside packet-entities processing; Temp entities later
+    // in this packet must be applied before its animation pose/history is saved
+    if ( animation_update && g_cl.m_is_running && thisptr == g_tf2.m_cl->m_NetChannel )
+    {
+        g_anims.update_others( );
+        g_lagcomp.update( );
+    }
+
+    g_anims.end_events( );
+}
+
+bool ATLAS_THISCALL hkReadSubChannelData( CNetChannel *thisptr, bf_read *buffer, i32 stream )
+{
+    if ( !g_cl.m_is_running || thisptr != g_tf2.m_cl->m_NetChannel || !g_fake_latency.filtering( thisptr ) )
+    {
+        return g_hooks.m_net_chan_read_sub_channel_data.thiscall< bool >( thisptr, buffer, stream );
+    }
+
+    if ( g_fake_latency.skip_block( thisptr, *buffer, stream ) )
+    {
+        return true;
+    }
+
+    const bool accepted{ g_hooks.m_net_chan_read_sub_channel_data.thiscall< bool >( thisptr, buffer, stream ) };
+    if ( accepted )
+    {
+        g_fake_latency.accept_block( stream );
+    }
+
+    return accepted;
+}
+
+void ATLAS_FASTCALL hkPostThink( C_BasePlayer *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_post_think.thiscall< void >( thisptr );
+    }
+
+    if ( g_prediction.m_is_active )
+    {
+        g_prediction.post_think( );
+        return;
+    }
+
+    g_hooks.m_post_think.thiscall< void >( thisptr );
+
+    if ( thisptr == g_cl.m_local )
+    {
+        g_anims.update_local( g_cl.m_local );
+    }
+}
+
+ATLAS_FORCE_INLINE void prepare_weapon_preview( C_TFWeaponBase *weapon )
+{
+    if ( !g_prediction.m_is_active || weapon != g_cl.m_weapon || !g_prediction.begin_weapon( ) )
+    {
+        return;
+    }
+
+    g_ragebot.think( );
+    g_melee.think( );
+    g_holdaim_mgr.on_create_move( );
+    g_nospread.create_move( );
+
+    if ( !g_prediction.sync_weapon_input( ) )
+    {
+        g_cl.m_will_fire = false;
+        return;
+    }
+
+    g_cl.m_will_fire = g_cl.will_fire_this_tick( );
+    g_proj_sim.capture_shot( );
+    g_auto_det.capture( );
+    g_trajectory.capture( );
+    g_proj_camera.capture( );
+}
+
+ATLAS_FORCE_INLINE void prepare_medigun_preview( C_WeaponMedigun *medigun )
+{
+    if ( !g_prediction.m_is_active || medigun != g_cl.m_weapon || !g_prediction.begin_weapon( ) )
+    {
+        return;
+    }
+
+    g_medbot.think( );
+    g_holdaim_mgr.on_create_move( );
+
+    if ( !g_prediction.sync_weapon_input( ) )
+    {
+        g_cl.m_will_fire = false;
+        return;
+    }
+
+    g_cl.m_will_fire = g_cl.will_fire_this_tick( );
+}
+
+ATLAS_FORCE_INLINE void prepare_weapon_busy_frame( C_TFWeaponBase *weapon )
+{
+    if ( !g_prediction.m_is_active || weapon != g_cl.m_weapon || !g_prediction.begin_weapon( ) )
+    {
+        return;
+    }
+
+    // CBasePlayer chose ItemBusyFrame before entering the weapon. PrimaryAttack cannot execute
+    // on this command;
+    g_cl.m_will_fire = false;
+
+    g_trajectory.capture( );
+
+    if ( g_ragebot.cancel_reload( ) )
+    {
+        g_prediction.sync_weapon_input( );
+    }
+}
+
+void ATLAS_FASTCALL hkWeaponItemPostFrame( C_TFWeaponBase *thisptr )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || !g_cl.m_weapon )
+    {
+        return g_hooks.m_weapon_item_post_frame.thiscall< void >( thisptr );
+    }
+
+    prepare_weapon_preview( thisptr );
+
+    const f32 last_fire{ thisptr->m_flLastFireTime( ) };
+    g_hooks.m_weapon_item_post_frame.thiscall< void >( thisptr );
+
+    if ( g_prediction.m_is_active && thisptr == g_cl.m_weapon )
+    {
+        g_cl.latch_throw( last_fire );
+    }
+
+    g_cl.predict_reload_shell( thisptr );
+}
+
+void ATLAS_FASTCALL hkSniperItemPostFrame( C_TFSniperRifle *thisptr )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || !g_cl.m_weapon )
+    {
+        return g_hooks.m_sniper_item_post_frame.thiscall< void >( thisptr );
+    }
+
+    prepare_weapon_preview( thisptr );
+
+    g_hooks.m_sniper_item_post_frame.thiscall< void >( thisptr );
+}
+
+void ATLAS_FASTCALL hkSniperClassicItemPostFrame( C_TFSniperRifle *thisptr )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || !g_cl.m_weapon )
+    {
+        return g_hooks.m_sniper_classic_item_post_frame.thiscall< void >( thisptr );
+    }
+
+    prepare_weapon_preview( thisptr );
+
+    g_hooks.m_sniper_classic_item_post_frame.thiscall< void >( thisptr );
+}
+
+void ATLAS_FASTCALL hkFlameThrowerItemPostFrame( C_TFFlameThrower *thisptr )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || !g_cl.m_weapon )
+    {
+        return g_hooks.m_flamethrower_item_post_frame.thiscall< void >( thisptr );
+    }
+
+    prepare_weapon_preview( thisptr );
+
+    g_hooks.m_flamethrower_item_post_frame.thiscall< void >( thisptr );
+}
+
+void ATLAS_FASTCALL hkMedigunItemPostFrame( C_WeaponMedigun *thisptr )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || !g_cl.m_weapon )
+    {
+        return g_hooks.m_medigun_item_post_frame.thiscall< void >( thisptr );
+    }
+
+    prepare_medigun_preview( thisptr );
+
+    g_hooks.m_medigun_item_post_frame.thiscall< void >( thisptr );
+}
+
+void ATLAS_FASTCALL hkFlameballItemPostFrame( C_TFWeaponFlameBall *thisptr )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || !g_cl.m_weapon )
+    {
+        return g_hooks.m_flameball_item_post_frame.thiscall< void >( thisptr );
+    }
+
+    prepare_weapon_preview( thisptr );
+
+    g_hooks.m_flameball_item_post_frame.thiscall< void >( thisptr );
+}
+
+void ATLAS_FASTCALL hkCalcIsAttackCritical( C_TFWeaponBase *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_calc_is_attack_critical.thiscall< void >( thisptr );
+    }
+
+    if ( !g_cl.m_local || thisptr->m_hOwnerEntity( ).Get( ) != g_cl.m_local )
+    {
+        return g_hooks.m_calc_is_attack_critical.thiscall< void >( thisptr );
+    }
+
+    g_crits.begin_crit_calc( thisptr );
+    g_hooks.m_calc_is_attack_critical.thiscall< void >( thisptr );
+    g_crits.end_crit_calc( thisptr );
+}
+
+bool ATLAS_THISCALL hkIsFirstTimePredicted( CPrediction *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_is_first_time_predicted.thiscall< bool >( thisptr );
+    }
+
+    if ( g_crits.wants_check_increment( ) )
+    {
+        return true;
+    }
+
+    return g_hooks.m_is_first_time_predicted.thiscall< bool >( thisptr );
+}
+
+void ATLAS_THISCALL hkGetLocalViewAngles(
+    CPrediction *thisptr,
+    vec3        &angles )
+{
+    if ( !g_cl.m_is_running || !g_cfg.m_misc.m_clean_demos || !g_tf2.m_demo_recorder->IsRecording( ) )
+    {
+        return g_hooks.m_get_local_view_angles.thiscall< void >( thisptr, &angles );
+    }
+
+    g_tf2.m_engine->GetViewAngles( angles );
+}
+
+void ATLAS_THISCALL hkWeaponItemBusyFrame( C_TFWeaponBase *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_weapon_item_busy_frame.thiscall< void >( thisptr );
+    }
+
+    // NOTE: Wraith; I HATE TF2
+    prepare_weapon_busy_frame( thisptr );
+
+    g_hooks.m_weapon_item_busy_frame.thiscall< void >( thisptr );
+
+    g_cl.predict_reload_shell( thisptr );
+}
+
+void ATLAS_THISCALL hkDoImageSpaceMotionBlur( const CViewSetup *setup, i32 x, i32 y, i32 width,
+                                              i32 height )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_do_image_space_motion_blur.thiscall< void >( setup, x, y, width, height );
+    }
+
+    if ( g_cfg.m_misc.m_removals[ config::REMOVAL_MOTION_BLUR ] == true )
+    {
+        return;
+    }
+
+    // note: we could also use this to increase motion blur value, something that moneybot had..
+
+    g_hooks.m_do_image_space_motion_blur.thiscall< void >( setup, x, y, width, height );
+}
+
+void ATLAS_THISCALL hkSetScreenOverlayMaterial( CViewRender *thisptr, IMaterial *material )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_set_screen_overlay_material.thiscall< void >( thisptr, material );
+    }
+
+    if ( material && g_misc.overlay_removed( material ) )
+    {
+        return;
+    }
+
+    g_hooks.m_set_screen_overlay_material.thiscall< void >( thisptr, material );
+}
+
+void ATLAS_THISCALL hkRenderView( CViewRender *thisptr, const CViewSetup &view, i32 clear_flags, i32 what_to_draw )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_render_view.thiscall< void >( thisptr, &view, clear_flags, what_to_draw );
+    }
+
+    g_post_process.begin_view( );
+    g_hooks.m_render_view.thiscall< void >( thisptr, &view, clear_flags, what_to_draw );
+    g_post_process.end_view( );
+    g_proj_camera.render( thisptr, view );
+}
+
+void ATLAS_THISCALL hkEnableWorldFog( void *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_enable_world_fog.thiscall< void >( thisptr );
+    }
+
+    g_hooks.m_enable_world_fog.thiscall< void >( thisptr );
+    g_misc.on_enable_fog( false );
+}
+
+void ATLAS_THISCALL hkEnable3dSkyboxFog( void *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_enable_3d_skybox_fog.thiscall< void >( thisptr );
+    }
+
+    g_hooks.m_enable_3d_skybox_fog.thiscall< void >( thisptr );
+    g_misc.on_enable_fog( true );
+}
+
+void ATLAS_THISCALL hkVoiceStatus( CHLClient *thisptr, i32 entity, i32 talking )
+{
+    g_hooks.m_voice_status.thiscall< void >( thisptr, entity, talking );
+
+    if ( !g_cl.m_is_running )
+    {
+        return;
+    }
+
+    g_radio.on_voice_status( entity, talking != 0 );
+    g_soundboard.on_voice_status( entity, talking != 0 );
+}
+
+void ATLAS_THISCALL hkPaint( CEngineVGui *thisptr, i32 mode )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_paint.thiscall< void >( thisptr, mode );
+    }
+
+    g_hooks.m_paint.thiscall< void >( thisptr, mode );
+
+    if ( mode & PAINT_UIPANELS )
+    {
+        g_cl.update_w2s( );
+        g_esp.render_target( );
+        g_ragebot.render( );
+        g_proj_sim.render( );
+        g_auto_rocketjmp.render( );
+        g_esp.paint( );
+        g_anti_aim.paint( );
+#if defined( ATLAS_DEV )
+        g_server_hitboxes.paint( );
+#endif // ATLAS_DEV
+        g_hitmarker.paint( );
+        g_fall_damage.paint( );
+        g_esp_builder.paint( );
+        g_trajectory.paint( );
+        g_projectile_warning.paint( );
+        g_lagcomp.paint( );
+        g_tracers.paint( );
+        g_extrapolate.paint( );
+        g_ragebot.paint( );
+        g_recorder.paint( );
+        g_script_api.paint( );
+        g_radio.on_frame( );
+        g_soundboard.on_frame( );
+        g_draw.send( );
+    }
+}
+
+i32 ATLAS_THISCALL hkGetMaxItemCount( void *rcx )
+{
+    return 4000;
+}
+
+void ATLAS_THISCALL hkResetLatched( C_BaseEntity *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_reset_latched.thiscall< void >( thisptr );
+    }
+
+    if ( thisptr == g_cl.m_local )
+    {
+        return;
+    }
+
+    g_hooks.m_reset_latched.thiscall< void >( thisptr );
+}
+
+// Prevents our noisemaker from getting used on the client if we decide to use it normally.
+// Also should allow us to use our noisemakers when dead or in spectator.
+void ATLAS_THISCALL hkOnClientUseConsumable( void *thisptr, void **pItem, void **pParent )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_on_client_use_consumable.thiscall< void >( thisptr, pItem, pParent );
+    }
+
+    if ( !g_cl.m_local )
+    {
+        return;
+    }
+
+    const auto shared_data{ g_cl.m_local->GetSharedPlayerData( ) };
+    if ( !shared_data )
+    {
+        return;
+    }
+
+    if ( g_tf2.m_globals->curtime < shared_data->m_flNextNoiseMakerTime( ) )
+    {
+        return;
+    }
+
+    auto kv{ new KeyValues( ATLAS_XORSTR_STATIC( "use_action_slot_item_server" ) ) };
+    g_tf2.m_engine->ServerCmdKeyValues( kv );
+}
+
+void ATLAS_THISCALL hkSetCursor( CMatSystemSurface *thisptr, vgui::HCursor hCursor )
+{
+    if ( !g_cl.m_is_running || !g_gui.open( ) )
+    {
+        return g_hooks.m_set_cursor.thiscall< void >( thisptr, hCursor );
+    }
+
+    switch ( g_gui.get_cursor_state( ) )
+    {
+        case gui::CURSOR_STATE_ARROW: hCursor = vgui::dc_arrow; break;
+        case gui::CURSOR_STATE_CLICK_HAND: hCursor = vgui::dc_hand; break;
+        case gui::CURSOR_STATE_TEXT_BEAM: hCursor = vgui::dc_ibeam; break;
+        case gui::CURSOR_STATE_RESIZE_NESW: hCursor = vgui::dc_sizenesw; break;
+        case gui::CURSOR_STATE_RESIZE_NWSE: hCursor = vgui::dc_sizenwse; break;
+        default: hCursor = vgui::dc_arrow; break; // Incase we somehow get a cursor state we don't support yet...
+    }
+
+    g_hooks.m_set_cursor.thiscall< void >( thisptr, hCursor );
+}
+
+void ATLAS_THISCALL hkLockCursor( CMatSystemSurface *thisptr )
+{
+    if ( !g_cl.m_is_running || !g_gui.open( ) )
+    {
+        return g_hooks.m_lock_cursor.thiscall< void >( thisptr );
+    }
+
+    g_tf2.m_surface->UnlockCursor( );
+}
+
+void ATLAS_THISCALL hkSetCursorPosition( CMatSystemSurface *thisptr, int x, int y )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_set_cursor_position.thiscall< void >( thisptr, x, y );
+    }
+
+    if ( g_gui.open( ) )
+    {
+        return;
+    }
+
+    g_hooks.m_set_cursor_position.thiscall< void >( thisptr, x, y );
+}
+
+void ATLAS_CDECL hkCheckForPureServerWhitelist( void **sm )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_check_for_pure_server_whitelist.ccall< void >( sm );
+    }
+
+    DBGOUT( "Prevented pure whitelist from being checked!" );
+}
+
+void ATLAS_CDECL hkDataTableWarning( const char *, ... )
+{
+    // annoying fucker
+}
+
+void ATLAS_THISCALL hkEstimateAbsVelocity( C_BaseEntity *thisptr, vec3 *velocity )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_estimate_abs_velocity.thiscall< void >( thisptr, velocity );
+    }
+
+    if ( const vec3 *replayed{ g_anims.replay_velocity( thisptr ) } )
+    {
+        *velocity = *replayed;
+        return;
+    }
+
+    g_hooks.m_estimate_abs_velocity.thiscall< void >( thisptr, velocity );
+}
+
+f32 ATLAS_THISCALL hkGetScreenAspectRatio( CEngineClient *thisptr )
+{
+    if ( !g_cl.m_is_running || !g_cfg.m_misc.m_aspect_ratio_changer || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_get_screen_aspect_ratio.thiscall< f32 >( thisptr );
+    }
+
+    return g_cfg.m_misc.m_aspect_ratio_amt;
+}
+
+i32 ATLAS_FASTCALL hkGetDirectPingToDataCenter( void *thisptr, u32 datacenter, u32 *out_pop )
+{
+    const i32 ping{ g_hooks.m_get_direct_ping_to_datacenter.fastcall< i32 >( thisptr, datacenter, out_pop ) };
+
+    if ( !g_cl.m_is_running )
+    {
+        return ping;
+    }
+
+    return g_fast_queue.think( ping, datacenter );
+}
+
+i32 ATLAS_FASTCALL hkVoiceGetCompressedData( u8 *out, i32 size, bool final )
+{
+    const i32 written{ g_hooks.m_voice_get_compressed_data.fastcall< i32 >( out, size, final ) };
+
+    if ( !g_cl.m_is_running )
+    {
+        return written;
+    }
+
+    return g_soundboard.on_compressed_voice( out, size, written );
+}
+
+// NOTE: Hoku;
+// This fixes a major flaw in Valve's ConVar fetching routine.
+// In CCVar::FindCommand, CConCommandHash::FindPtr is called.
+// The iteration is slow for multiple reasons:
+// 1. Pointers are needlessly compared.
+// 2. The hashing algo that Valve uses is not efficient in a runtime context.
+// 3. The name of the ConCommand/ConVar is not hashed at all if the command is being searched for by name.
+// We solve this by caching every ConVar when we walk the linked list in entry, and just returning the
+// cached pointer from the command table we built. unordered_map hashing is MAJORLY faster and will improve engine performance
+// significantly.
+const ConCommandBase *ATLAS_THISCALL hkFindCommandBase_const( ICvar *thisptr, const char *name )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_find_command_const.thiscall< ConCommandBase * >( thisptr, name );
+    }
+
+    auto cvar{ g_tf2.m_cmd_table.get( HASH_RT( name ) ) };
+    if ( !cvar )
+    {
+        const auto fallback{ g_hooks.m_find_command_const.thiscall< ConCommandBase * >( thisptr, name ) };
+        if ( fallback )
+        {
+            cvar = g_tf2.m_cmd_table.insert( HASH_RT( fallback->m_pszName ), fallback );
+        } else
+        {
+            return nullptr;
+        }
+    }
+
+    return cvar ? *cvar : nullptr;
+}
+
+ConCommandBase *ATLAS_THISCALL hkFindCommandBase( ICvar *thisptr, const char *name )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_find_command.thiscall< ConCommandBase * >( thisptr, name );
+    }
+
+    auto cvar{ g_tf2.m_cmd_table.get( HASH_RT( name ) ) };
+    if ( !cvar )
+    {
+        const auto fallback{ g_hooks.m_find_command_const.thiscall< ConCommandBase * >( thisptr, name ) };
+        if ( fallback )
+        {
+            cvar = g_tf2.m_cmd_table.insert( HASH_RT( fallback->m_pszName ), fallback );
+        } else
+        {
+            return nullptr;
+        }
+    }
+
+    return cvar ? *cvar : nullptr;
+}
+
+void ATLAS_THISCALL hkUnregisterConCommand( ICvar *thisptr, ConCommandBase *variable )
+{
+    g_hooks.m_unregister_con_command.thiscall< void >( thisptr, variable );
+    const auto cached{ g_tf2.m_cmd_table.get( HASH_RT( variable->m_pszName ) ) };
+    if ( cached && *cached == variable )
+    {
+        g_tf2.m_cmd_table.erase( HASH_RT( variable->m_pszName ) );
+    }
+}
+
+void ATLAS_THISCALL hkUnregisterConCommands( ICvar *thisptr, i32 dll_identifier )
+{
+    g_hooks.m_unregister_con_commands.thiscall< void >( thisptr, dll_identifier );
+    g_tf2.m_cmd_table.clear( );
+}
+
+bool ATLAS_THISCALL hkInCond( CTFPlayerShared *thisptr, ETFCond cond )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_in_cond.thiscall< bool >( thisptr, cond );
+    }
+
+    // Let the game do what it naturally does when dead.
+    if ( !g_cl.m_local->IsAlive( ) )
+    {
+        return g_hooks.m_in_cond.thiscall< bool >( thisptr, cond );
+    }
+
+    const auto shared{ g_cl.m_local->GetSharedPlayerData( ) };
+    if ( !shared )
+    {
+        return g_hooks.m_in_cond.thiscall< bool >( thisptr, cond );
+    }
+
+    const auto retaddr = ( uptr )__builtin_return_address( 0 );
+    const bool is_local{ shared == thisptr };
+
+    switch ( cond )
+    {
+        case TF_COND_DISGUISED:
+        case TF_COND_DISGUISED_AS_DISPENSER: // Condition bit 42 kept here for funny servers that decide to re-enable it's functionality. (Game logic still runs on it!)
+        {
+            if ( !is_local && g_cfg.m_misc.m_removals[ config::REMOVAL_DISGUISES ] == true )
+            {
+                return false;
+            }
+
+            const bool picks_model{ retaddr == g_tf2.m_C_TFPlayer_ValidateModelIndex_dispenser_retaddr.get_raw( ) ||
+                                    retaddr == g_tf2.m_C_TFPlayer_ValidateModelIndex_disguise_retaddr.get_raw( ) };
+            if ( !is_local && picks_model && g_cfg.m_ragebot.m_enabled && !g_cfg.m_ragebot.m_ignores[ config::IGNORE_DISGUISED ] )
+            {
+                return false;
+            }
+
+            break;
+        }
+
+        case TF_COND_TAUNTING:
+        {
+            if ( !is_local && g_cfg.m_misc.m_removals[ config::REMOVAL_TAUNTS ] == true )
+            {
+                return false;
+            }
+
+            // Allow us to freely move while taunting.
+            // We still keep the movement speed and gun restrictions unfortunately (it was patched a long time ago).
+            // But, funny conga sideways.
+            if ( retaddr == g_tf2.m_C_TFPlayer_CreateMove_retaddr.get_raw( ) &&
+                 ( g_cfg.m_misc.m_removals[ config::REMOVAL_TAUNT_RESTRICTIONS ] == true || g_misc.is_taunt_exploit_taking_place( ) ) )
+            {
+                return false;
+            }
+
+            break;
+        }
+
+        case TF_COND_FREEZE_INPUT:
+        {
+            if ( retaddr == g_tf2.m_C_TFPlayer_CreateMove_freeze_retaddr.get_raw( ) &&
+                 g_cfg.m_misc.m_removals[ config::REMOVAL_KART_CAGE ] == true )
+            {
+                return false;
+            }
+
+            break;
+        }
+
+        case TF_COND_HALLOWEEN_KART:
+        {
+            if ( ( retaddr == g_tf2.m_C_TFPlayer_CreateMove_kart_retaddr.get_raw( ) ||
+                   retaddr == g_tf2.m_CTFInput_ApplyMouse_kart_retaddr.get_raw( ) ) &&
+                 g_cfg.m_misc.m_removals[ config::REMOVAL_KART_RESTRICTIONS ] == true )
+            {
+                return false;
+            }
+
+            break;
+        }
+
+        default: break;
+    }
+
+    // Some dumb intern at Valve decided it was a good idea to check if the player was ever scoped to prevent the local player model from drawing.
+    // Considering the fact that MVM medieval mode has a technically undocumented thirdperson functionality, this was probably made
+    // for something in regards to that but was scrapped early on in the game's development. Either way it serves as nothing but
+    // a pointless annoyance for us, so we fix it here.
+    if ( ( g_cfg.m_misc.m_removals[ config::REMOVAL_SCOPE_OVERLAY ] == true ||
+           g_cfg.m_misc.m_removals[ config::REMOVAL_SCOPE_ZOOM ] == true ) &&
+         ( retaddr == g_tf2.m_C_TFPlayer_ShouldDraw_retaddr.get_raw( ) ||
+           retaddr == g_tf2.m_C_TFWearable_ShouldDraw_retaddr.get_raw( ) ) )
+    {
+        return false;
+    }
+
+    return g_hooks.m_in_cond.thiscall< bool >( thisptr, cond );
+}
+
+void ATLAS_THISCALL hkPaintTraverse( vgui::IPanel *thisptr, vgui::VPANEL vguiPanel, bool forceRepaint, bool allowForce )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_paint_traverse.thiscall< void >( thisptr, vguiPanel, forceRepaint, allowForce );
+    }
+    ATLAS_INTEGRITY_CHECK( 0x52B9D4E7A1F608C3ull );
+
+    constexpr static auto hud_scope_panel{ HASH_CT( "HudScope" ) };
+    const auto            target_panel{ HASH_RT( thisptr->GetName( vguiPanel ) ) };
+
+    // Prevents the scope overlay panel from drawing if we're scoped.
+    // It's annoying.
+    if ( target_panel == hud_scope_panel &&
+         g_cfg.m_misc.m_removals[ config::REMOVAL_SCOPE_OVERLAY ] == true )
+    {
+        return;
+    }
+
+    if ( !g_streamer_mode.on_paint_traverse( target_panel ) )
+    {
+        return;
+    }
+
+    return g_hooks.m_paint_traverse.thiscall< void >( thisptr, vguiPanel, forceRepaint, allowForce );
+}
+
+bool ATLAS_THISCALL hkShouldDrawViewModel( ClientModeShared *thisptr )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_should_draw_view_model.thiscall< bool >( thisptr );
+    }
+
+    if ( !g_cl.m_local->IsAlive( ) )
+    {
+        return g_hooks.m_should_draw_view_model.thiscall< bool >( thisptr );
+    }
+
+    if ( g_tf2.m_input->CAM_IsThirdPerson( ) )
+    {
+        return false;
+    }
+
+    if ( ( g_cfg.m_misc.m_removals[ config::REMOVAL_SCOPE_ZOOM ] == true &&
+           g_cfg.m_misc.m_removals[ config::REMOVAL_SCOPE_OVERLAY ] == true ) &&
+         g_cl.m_local->IsZoomed( ) )
+    {
+        return g_cfg.m_viewmodel.m_show_in_scope;
+    }
+
+    return g_hooks.m_should_draw_view_model.thiscall< bool >( thisptr );
+}
+
+void ATLAS_THISCALL hkSetInt( KeyValues *thisptr, const char *keyName, i32 value )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_set_int.thiscall< void >( thisptr, keyName, value );
+    }
+
+    g_hooks.m_set_int.thiscall< void >( thisptr, keyName, value );
+
+    const auto retaddr = ( uptr )__builtin_return_address( 0 );
+    if ( retaddr == g_tf2.m_KeyValues_SetInt_retaddr.get_raw( ) && str::equals( keyName, ATLAS_XORSTR( "nemesis" ).get( ) ) )
+    {
+        // FIXME: Hoku; For some reason, I wasn't able to get this working while using __builtin_frame_address.
+        // I have no idea if __builtin_frame_address is even the same as _AddressOfReturnAddress, however we should figure out
+        // a way to swap it out for a builtin so we aren't relying on MSVC intrinsics for this.
+        auto frame_addr{ ( uptr * )_AddressOfReturnAddress( ) };
+        *frame_addr = g_tf2.m_KeyValues_SetInt_jump.get_raw( );
+    }
+}
+
+bool ATLAS_THISCALL hkIsPlayerDominated( void *thisptr, i32 idx )
+{
+    if ( !g_cl.m_is_running || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_is_player_dominated.thiscall< bool >( thisptr, idx );
+    }
+
+    const auto result{ g_hooks.m_is_player_dominated.thiscall< bool >( thisptr, idx ) };
+    if ( !result )
+    {
+        const auto retaddr = ( uptr )__builtin_return_address( 0 );
+        if ( retaddr == g_tf2.m_C_TFPlayerShared_IsPlayerDominated_retaddr.get_raw( ) )
+        {
+            // FIXME: Hoku; For some reason, I wasn't able to get this working while using __builtin_frame_address.
+            // I have no idea if __builtin_frame_address is even the same as _AddressOfReturnAddress, however we should figure out
+            // a way to swap it out for a builtin so we aren't relying on MSVC intrinsics for this.
+            auto frame_addr{ ( uptr * )_AddressOfReturnAddress( ) };
+            *frame_addr = g_tf2.m_C_TFPlayerShared_IsPlayerDominated_jump.get_raw( );
+        }
+    }
+
+    return result;
+}
+
+i32 ATLAS_THISCALL hkPlayerPanelGetTeam( void *thisptr )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_resource || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_player_panel_get_team.thiscall< i32 >( thisptr );
+    }
+
+    const i32 team{ g_hooks.m_player_panel_get_team.thiscall< i32 >( thisptr ) };
+
+    if ( ( uptr )__builtin_return_address( 0 ) != g_tf2.m_TeamStatus_GetTeam_retaddr.get_raw( ) )
+    {
+        return team;
+    }
+
+    return g_cl.m_resource->m_iTeam( )[ g_tf2.m_engine->GetLocalPlayer( ) ];
+}
+
+bool ATLAS_THISCALL hkCheckAchievementsEnabled( void *thisptr )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_check_achievements_enabled.thiscall< bool >( thisptr );
+    }
+
+    return true;
+}
+
+// These series of functions hide the avatars used by people in game.
+bool ATLAS_THISCALL hkSetAvatarSteamID( void *thisptr, steamid_t steam_id_user, i32 avatar_size )
+{
+    if ( !g_cl.m_is_running || !g_cfg.m_streamer_mode.m_enabled || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_set_avatar_steam_id.thiscall< bool >( thisptr, steam_id_user, avatar_size );
+    }
+
+    if ( !g_streamer_mode.should_hide_player( steam_id_user ) )
+    {
+        return g_hooks.m_set_avatar_steam_id.thiscall< bool >( thisptr, steam_id_user, avatar_size );
+    }
+
+    return g_hooks.m_set_avatar_steam_id.thiscall< bool >( thisptr, steamid_t{ }, avatar_size );
+}
+
+void ATLAS_THISCALL hkSetPlayer( void *thisptr, steamid_t steam_id_user, i32 avatar_size )
+{
+    if ( !g_cl.m_is_running || !g_cfg.m_streamer_mode.m_enabled || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_set_player.thiscall< void >( thisptr, steam_id_user, avatar_size );
+    }
+
+    if ( !g_streamer_mode.should_hide_player( steam_id_user ) )
+    {
+        return g_hooks.m_set_player.thiscall< void >( thisptr, steam_id_user, avatar_size );
+    }
+
+    g_hooks.m_set_player.thiscall< void >( thisptr, steamid_t{ }, avatar_size );
+}
+
+// CTFClientScoreBoardDialog::UpdatePlayerAvatar
+void ATLAS_THISCALL hkUpdatePlayerAvatar1( void *thisptr, i32 player_idx, KeyValues *kv )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_update_player_avatar1.thiscall< void >( thisptr, player_idx, kv );
+    }
+
+    if ( !g_streamer_mode.should_hide_player( player_idx ) )
+    {
+        return g_hooks.m_update_player_avatar1.thiscall< void >( thisptr, player_idx, kv );
+    }
+}
+
+// CTFMatchSummary::UpdatePlayerAvatar
+void ATLAS_THISCALL hkUpdatePlayerAvatar2( void *thisptr, i32 player_idx, KeyValues *kv )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_update_player_avatar2.thiscall< void >( thisptr, player_idx, kv );
+    }
+
+    if ( !g_streamer_mode.should_hide_player( player_idx ) )
+    {
+        return g_hooks.m_update_player_avatar2.thiscall< void >( thisptr, player_idx, kv );
+    }
+}
+
+// CTFHudMannVsMachineScoreboard::UpdatePlayerAvatar
+void ATLAS_THISCALL hkUpdatePlayerAvatar3( void *thisptr, i32 player_idx, KeyValues *kv )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_update_player_avatar3.thiscall< void >( thisptr, player_idx, kv );
+    }
+
+    if ( !g_streamer_mode.should_hide_player( player_idx ) )
+    {
+        return g_hooks.m_update_player_avatar3.thiscall< void >( thisptr, player_idx, kv );
+    }
+}
+
+// CTFHudMatchStatus::UpdatePlayerAvatar
+void ATLAS_THISCALL hkUpdatePlayerAvatar4( void *thisptr, i32 player_idx, KeyValues *kv )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_update_player_avatar4.thiscall< void >( thisptr, player_idx, kv );
+    }
+
+    if ( !g_streamer_mode.should_hide_player( player_idx ) )
+    {
+        return g_hooks.m_update_player_avatar4.thiscall< void >( thisptr, player_idx, kv );
+    }
+}
+
+const char *ATLAS_THISCALL hkGetPlayerName( IGameResources *thisptr, i32 idx )
+{
+    if ( !g_cl.m_is_running || !g_cl.m_local || g_cl.should_perform_clean_frame( ) )
+    {
+        return g_hooks.m_get_player_name.thiscall< const char * >( thisptr, idx );
+    }
+
+    return g_cl.get_player_name( thisptr, idx );
+}
+
+void ATLAS_THISCALL hkInsertAndColorizeText( void *thisptr, wchar_t *buffer, i32 idx )
+{
+    if ( !g_cl.m_is_running )
+    {
+        return g_hooks.m_insert_and_colorize_text.thiscall< void >( thisptr, buffer, idx );
+    }
+
+    if ( !g_cl.m_local ||
+         !g_cl.m_resource ||
+         idx <= 0 ||
+         idx > g_tf2.m_engine->GetMaxClients( ) )
+    {
+        return g_hooks.m_insert_and_colorize_text.thiscall< void >( thisptr, buffer, idx );
+    }
+
+    player_info_t info{ };
+    if ( !g_tf2.m_engine->GetPlayerInfo( idx, &info ) )
+    {
+        return g_hooks.m_insert_and_colorize_text.thiscall< void >( thisptr, buffer, idx );
+    }
+
+    wchar_t player_name[ MAX_PLAYER_NAME_LENGTH ]{ };
+    if ( !I( MultiByteToWideChar )( CP_UTF8, 0, info.name, -1, player_name, MAX_PLAYER_NAME_LENGTH ) )
+    {
+        return g_hooks.m_insert_and_colorize_text.thiscall< void >( thisptr, buffer, idx );
+    }
+
+    // TODO: Might not be the most optimal? We're technically replacing the string every single time this function is called.
+    // So even if the player doesn't need their name replaced it gets replaced anyways.
+    const char *replacement{ g_cl.get_player_name( idx ) };
+    wchar_t     replacement_name[ MAX_PLAYER_NAME_LENGTH ]{ };
+    if ( !I( MultiByteToWideChar )( CP_UTF8, 0, replacement, -1, replacement_name, MAX_PLAYER_NAME_LENGTH ) )
+    {
+        return g_hooks.m_insert_and_colorize_text.thiscall< void >( thisptr, buffer, idx );
+    }
+
+    constexpr usize buffer_capacity{ 1024 };
+    const usize     buffer_length{ str::bounded_length( buffer, buffer_capacity ) };
+    if ( buffer_length == buffer_capacity )
+    {
+        return g_hooks.m_insert_and_colorize_text.thiscall< void >( thisptr, buffer, idx );
+    }
+
+    const atl::wstring_view text{ buffer, buffer_length };
+    const atl::wstring_view name{ player_name };
+    if ( name.empty( ) )
+    {
+        return g_hooks.m_insert_and_colorize_text.thiscall< void >( thisptr, buffer, idx );
+    }
+
+    const usize name_start{ text.find( name ) };
+    if ( name_start == str::npos )
+    {
+        return g_hooks.m_insert_and_colorize_text.thiscall< void >( thisptr, buffer, idx );
+    }
+
+    const atl::wstring_view replacement_view{ replacement_name };
+    const usize             player_name_end{ name_start + name.size( ) };
+    const usize             suffix_start{ player_name_end < text.size( ) ? player_name_end + 1 : player_name_end };
+    const usize             new_length{ name_start + replacement_view.size( ) + 1 + text.size( ) - suffix_start };
+    if ( new_length >= buffer_capacity )
+    {
+        return g_hooks.m_insert_and_colorize_text.thiscall< void >( thisptr, buffer, idx );
+    }
+
+    atl::wstring< buffer_capacity - 1 > sanitized_buffer{ };
+    sanitized_buffer.append( text.substr( 0, name_start ) );
+    sanitized_buffer.append( replacement_view );
+    sanitized_buffer.push_back( L'\x1' );
+    sanitized_buffer.append( text.substr( suffix_start ) );
+
+    if ( sanitized_buffer[ 0 ] == L'\x2' )
+    {
+        sanitized_buffer[ 0 ] = L'\x3';
+    }
+
+    return g_hooks.m_insert_and_colorize_text.thiscall< void >( thisptr, sanitized_buffer.data( ), idx );
+}
+
+void ATLAS_THISCALL hkVerifyChangedLoadoutsAreValid( void *thisptr )
+{
+    if ( !g_cl.m_is_running || g_cfg.m_misc.m_removals[ config::REMOVAL_EQUIP_REGIONS ] == false )
+    {
+        return g_hooks.m_verify_changed_loadouts_are_valid.thiscall< void >( thisptr );
+    }
+
+    DBGOUT( "Prevented loadout verification from happening." );
+}
+
+u32 ATLAS_CDECL hkGenerateEquipRegionConflictMask( i32 player_class, i32 up_to_slot, i32 ignore_slot )
+{
+    if ( !g_cl.m_is_running || g_cfg.m_misc.m_removals[ config::REMOVAL_EQUIP_REGIONS ] == false )
+    {
+        return g_hooks.m_generate_equip_region_conflict_mask.ccall< u32 >( player_class, up_to_slot, ignore_slot );
+    }
+
+    return 0;
+}
+
+void *ATLAS_THISCALL hkGetItemInLoadoutForClass( void *thisptr, i32 player_class, i32 slot, steamid_t *sid )
+{
+    if ( !g_cl.m_is_running || g_cfg.m_misc.m_removals[ config::REMOVAL_EQUIP_REGIONS ] == false )
+    {
+        return g_hooks.m_get_item_in_loadout_for_class.thiscall< void * >( thisptr, player_class, slot, sid );
+    }
+
+    const auto retaddr{ ( uptr )__builtin_return_address( 0 ) };
+    if ( retaddr == g_tf2.m_CTFInventoryManager_GetItemInLoadoutForClass_retaddr.get_raw( ) )
+    {
+        return nullptr;
+    }
+
+    return g_hooks.m_get_item_in_loadout_for_class.thiscall< void * >( thisptr, player_class, slot, sid );
+}
+
+const char *ATLAS_THISCALL hkGetShootSound( C_TFWeaponBase *thisptr, i32 index )
+{
+    if ( !g_cl.m_is_running || !g_cfg.m_misc.m_giant_weapon_sounds || thisptr != g_cl.m_weapon )
+    {
+        return g_hooks.m_get_shoot_sound.thiscall< const char * >( thisptr, index );
+    }
+
+    i32 &team{ thisptr->m_iTeamNum( ) };
+    u16 &econ_id{ thisptr->m_iItemDefinitionIndex( ) };
+
+    const i32 original_team{ team };
+    const u16 original_econ{ econ_id };
+
+    if ( g_cfg.m_misc.m_apply_to_alternate_weapons )
+    {
+        switch ( thisptr->GetWeaponID( ) )
+        {
+            case TF_WEAPON_ROCKETLAUNCHER:
+            {
+                econ_id = Soldier_m_RocketLauncher;
+                break;
+            }
+
+            case TF_WEAPON_GRENADELAUNCHER:
+            {
+                econ_id = Demoman_m_GrenadeLauncher;
+                break;
+            }
+
+            case TF_WEAPON_FLAMETHROWER:
+            {
+                econ_id = Pyro_m_FlameThrower;
+                break;
+            }
+
+            default: break;
+        }
+    }
+
+    team = TF_TEAM_PVE_INVADERS_GIANTS;
+    const char *sound{ g_hooks.m_get_shoot_sound.thiscall< const char * >( thisptr, index ) };
+    team    = original_team;
+    econ_id = original_econ;
+
+    return g_misc.giant_shoot_sound( sound );
+}
+
+void ATLAS_CDECL hkCbuf_ExecuteCommand( const CCommand &args, cmd_source_t source )
+{
+    if ( !g_cl.m_is_running || args.m_ppArgv[ 0 ] == nullptr )
+    {
+        return g_hooks.m_cbuf_execute_command.ccall< void >( args, source );
+    }
+
+    const auto cmd_hash{ HASH_RT( args.m_ppArgv[ 0 ] ) };
+
+    switch ( cmd_hash )
+    {
+        case HASH_CT( "cl_interp" ):
+        case HASH_CT( "cl_interpolate" ):
+        case HASH_CT( "cl_interp_ratio" ):
+        case HASH_CT( "cl_cmdrate" ):
+        case HASH_CT( "cl_updaterate" ):
+        case HASH_CT( "cl_smooth" ):
+        case HASH_CT( "cl_interp_all" ):
+        case HASH_CT( "cl_predict" ):
+        case HASH_CT( "cl_predictweapons" ):
+        case HASH_CT( "cl_pred_optimize" ):
+        case HASH_CT( "cl_lagcompensation" ):
+        {
+            DBGOUT( "Prevented a networking command from being changed." );
+            push_notification( notify_kind_t::warning, ICON_CODE, ATLAS_XORSTR( "ConVars" ).get( ), ATLAS_XORSTR( "Prevented a critical networking ConVar from being changed!" ).get( ) );
+            return;
+        }
+
+        case HASH_CT( "setinfo" ):
+        {
+            if ( args.m_ppArgv[ 1 ] == nullptr )
+            {
+                break;
+            }
+
+            const auto set_target_hash{ HASH_RT( args.m_ppArgv[ 1 ] ) };
+            switch ( set_target_hash )
+            {
+                case HASH_CT( "cl_interp" ):
+                case HASH_CT( "cl_interpolate" ):
+                case HASH_CT( "cl_interp_ratio" ):
+                case HASH_CT( "cl_cmdrate" ):
+                case HASH_CT( "cl_updaterate" ):
+                case HASH_CT( "cl_smooth" ):
+                case HASH_CT( "cl_interp_all" ):
+                case HASH_CT( "cl_predict" ):
+                case HASH_CT( "cl_predictweapons" ):
+                case HASH_CT( "cl_pred_optimize" ):
+                case HASH_CT( "cl_lagcompensation" ):
+                {
+                    DBGOUT( "Prevented a networking command from being changed through setinfo!" );
+                    push_notification( notify_kind_t::warning, ICON_CODE, ATLAS_XORSTR( "ConVars" ).get( ), ATLAS_XORSTR( "Prevented a critical networking convar from being changed!" ).get( ) );
+                    return;
+                }
+
+                default: break;
+            }
+        }
+
+        default: break;
+    }
+
+    g_hooks.m_cbuf_execute_command.ccall< void >( args, source );
+}
+
+i32 ATLAS_CDECL hkNotificationQueue_Add( CEconNotification *notif )
+{
+    if ( !g_cl.m_is_running || !notif || g_cfg.m_misc.m_removals[ config::REMOVAL_ITEM_NOTIFICATIONS ] == false )
+    {
+        return g_hooks.m_notification_queue_add.ccall< i32 >( notif );
+    }
+
+    Assert( notif != nullptr );
+    if ( str::equals( notif->m_pText, ATLAS_XORSTR( "TF_HasNewItems" ).get( ) ) )
+    {
+        notif->Destroy( ); // this is more simple and on theory should work and fix the crashes.
+        return 0;
+    }
+
+    return g_hooks.m_notification_queue_add.ccall< i32 >( notif );
+}

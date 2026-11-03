@@ -1,0 +1,651 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{7E2A6F3C-2B1D-4C8E-9A5F-1D2E3F4A5B6C}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>AtlasTF2</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <LLVMInstallDir Condition="'$(LLVMInstallDir)'=='' and Exists('$(ProgramFiles)\LLVM\bin\clang-cl.exe')">$(ProgramFiles)\LLVM</LLVMInstallDir>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>ClangCL</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>ClangCL</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)output\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>atlas-tf2</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level1</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NOMINMAX;WIN32_LEAN_AND_MEAN;CUR_COMMIT_HASH="UNK";CUR_COMMIT_AUTHOR="UNK";ATLAS_TF2=1;ATLAS_CHANNEL_BETA;ATLAS_DISABLE_CLOUD;ATLAS_DEV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)base;$(SolutionDir)tf2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <OmitDefaultLibName>true</OmitDefaultLibName>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <AdditionalOptions>/clang:-mbmi /clang:-mfma /clang:-ffreestanding /clang:-fno-exceptions /clang:-fno-rtti /clang:-fno-stack-protector /clang:-fno-threadsafe-statics /clang:-fno-unwind-tables /clang:-fno-asynchronous-unwind-tables /clang:-fno-ident /clang:-fno-unroll-loops /clang:-march=haswell /clang:-mtune=haswell %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <EntryPointSymbol>atlas_entry</EntryPointSymbol>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkIncremental>false</LinkIncremental>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <GenerateManifest>false</GenerateManifest>
+      <AdditionalOptions>/NOLOGO %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level1</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NOMINMAX;WIN32_LEAN_AND_MEAN;CUR_COMMIT_HASH="UNK";CUR_COMMIT_AUTHOR="UNK";ATLAS_TF2=1;ATLAS_CHANNEL_BETA;ATLAS_DISABLE_CLOUD;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)base;$(SolutionDir)tf2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <OmitDefaultLibName>true</OmitDefaultLibName>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <AdditionalOptions>/clang:-mbmi /clang:-mfma /clang:-ffreestanding /clang:-fno-exceptions /clang:-fno-rtti /clang:-fno-stack-protector /clang:-fno-threadsafe-statics /clang:-fno-unwind-tables /clang:-fno-asynchronous-unwind-tables /clang:-fno-ident /clang:-fno-unroll-loops /clang:-march=haswell /clang:-mtune=haswell %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <EntryPointSymbol>atlas_entry</EntryPointSymbol>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <LinkIncremental>false</LinkIncremental>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <GenerateManifest>false</GenerateManifest>
+      <AdditionalOptions>/NOLOGO %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <ClCompile Include="..\base\steam.cpp" />
+    <ClCompile Include="..\base\steam_html.cpp" />
+    <ClCompile Include="..\base\audio\audio.cpp" />
+    <ClCompile Include="..\base\audio\codecs.cpp" />
+    <ClCompile Include="..\base\audio\stream.cpp" />
+    <ClCompile Include="..\base\input\input.cpp" />
+    <ClCompile Include="..\base\render\font.cpp" />
+    <ClCompile Include="..\base\render\gdi.cpp" />
+    <ClCompile Include="..\base\render\render.cpp" />
+    <ClCompile Include="..\base\hook\allocator.cpp" />
+    <ClCompile Include="..\base\hook\easy.cpp" />
+    <ClCompile Include="..\base\hook\inline_hook.cpp" />
+    <ClCompile Include="..\base\hook\vmt_hook.cpp" />
+    <ClCompile Include="..\base\gui\arena.cpp" />
+    <ClCompile Include="..\base\gui\gui.cpp" />
+    <ClCompile Include="..\base\gui\containers.cpp" />
+    <ClCompile Include="..\base\gui\editor.cpp" />
+    <ClCompile Include="..\base\gui\elements.cpp" />
+    <ClCompile Include="..\base\gui\picker.cpp" />
+    <ClCompile Include="..\base\gui\widgets.cpp" />
+    <ClCompile Include="..\base\gui\notifications.cpp" />
+    <ClCompile Include="..\base\gui\sounds.cpp" />
+    <ClCompile Include="..\base\gui\watermark.cpp" />
+    <ClCompile Include="..\base\gui\indicator.cpp" />
+    <ClCompile Include="..\base\gui\particles.cpp" />
+    <ClCompile Include="..\base\runtime\memory.cpp" />
+    <ClCompile Include="..\base\runtime\assert.cpp" />
+    <ClCompile Include="..\base\runtime\thread.cpp" />
+    <ClCompile Include="..\base\runtime\thread_pool.cpp" />
+    <ClCompile Include="..\base\runtime\exceptions.cpp" />
+    <ClCompile Include="..\base\runtime\integrity.cpp" />
+    <ClCompile Include="..\base\base.cpp" />
+    <ClCompile Include="..\base\util\crypto.cpp" />
+    <ClCompile Include="..\base\util\ed25519.cpp" />
+    <ClCompile Include="..\base\util\json.cpp" />
+    <ClCompile Include="..\base\util\pe_module.cpp" />
+    <ClCompile Include="..\base\api\api.cpp" />
+    <ClCompile Include="..\base\script\script.cpp" />
+    <ClCompile Include="..\base\script\bind.cpp" />
+    <ClCompile Include="..\base\script\ide.cpp" />
+    <ClCompile Include="..\base\script\lstr.cpp" />
+    <ClCompile Include="..\base\render\canvas.cpp" />
+    <ClCompile Include="..\base\render\overlay.cpp" />
+    <ClCompile Include="..\base\script\lua_core.cpp">
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\lua;$(SolutionDir)base\libs\libc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/X /GF- %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\script\dtoa.cpp">
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/X /GF- %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\script\crt.cpp">
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/X /GF- %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\hde64.cpp" />
+    <ClCompile Include="..\tf2\entry.cpp" />
+    <ClCompile Include="..\tf2\global.cpp" />
+    <ClCompile Include="..\tf2\menu.cpp" />
+    <ClCompile Include="..\tf2\preview.cpp" />
+    <ClCompile Include="..\tf2\config.cpp" />
+    <ClCompile Include="..\tf2\config_storage.cpp" />
+    <ClCompile Include="..\tf2\script_api.cpp" />
+    <ClCompile Include="..\tf2\sdk.cpp" />
+    <ClCompile Include="..\tf2\entities.cpp" />
+    <ClCompile Include="..\tf2\netvars.cpp" />
+    <ClCompile Include="..\tf2\features\anti_aim.cpp" />
+    <ClCompile Include="..\tf2\features\anti_backstab.cpp" />
+    <ClCompile Include="..\tf2\features\strafe-prediction.cpp" />
+    <ClCompile Include="..\tf2\features\air_blast.cpp" />
+    <ClCompile Include="..\tf2\features\anims.cpp" />
+    <ClCompile Include="..\tf2\features\auto_det.cpp" />
+    <ClCompile Include="..\tf2\features\auto_rocketjmp.cpp" />
+    <ClCompile Include="..\tf2\features\auto_vacc.cpp" />
+    <ClCompile Include="..\tf2\features\bone_setup.cpp" />
+    <ClCompile Include="..\tf2\features\lagcomp.cpp" />
+    <ClCompile Include="..\tf2\features\extrapolate.cpp" />
+    <ClCompile Include="..\tf2\features\fakelag.cpp" />
+    <ClCompile Include="..\tf2\features\fake_latency.cpp" />
+    <ClCompile Include="..\tf2\features\fast_queue.cpp" />
+    <ClCompile Include="..\tf2\features\prediction.cpp" />
+    <ClCompile Include="..\tf2\features\datamaps.cpp" />
+    <ClCompile Include="..\tf2\features\doors.cpp" />
+    <ClCompile Include="..\tf2\features\fall_damage.cpp" />
+    <ClCompile Include="..\tf2\features\misc.cpp" />
+    <ClCompile Include="..\tf2\features\player_data.cpp" />
+    <ClCompile Include="..\tf2\features\player_cloud.cpp" />
+    <ClCompile Include="..\tf2\features\player_perf.cpp" />
+    <ClCompile Include="..\tf2\features\party_network.cpp" />
+    <ClCompile Include="..\tf2\features\entity_cache.cpp" />
+    <ClCompile Include="..\tf2\features\esp.cpp" />
+    <ClCompile Include="..\tf2\features\esp_builder.cpp" />
+    <ClCompile Include="..\tf2\features\chams.cpp" />
+    <ClCompile Include="..\tf2\features\model_render.cpp" />
+    <ClCompile Include="..\tf2\features\glow.cpp" />
+    <ClCompile Include="..\tf2\features\hitmarker.cpp" />
+    <ClCompile Include="..\tf2\features\compression.cpp" />
+    <ClCompile Include="..\tf2\features\event_notifiers.cpp" />
+    <ClCompile Include="..\tf2\features\crits.cpp" />
+    <ClCompile Include="..\tf2\features\events.cpp" />
+    <ClCompile Include="..\tf2\features\loading.cpp" />
+    <ClCompile Include="..\tf2\features\networking.cpp" />
+    <ClCompile Include="..\tf2\features\tickbase.cpp" />
+    <ClCompile Include="..\tf2\features\nospread.cpp" />
+    <ClCompile Include="..\tf2\features\proj_camera.cpp" />
+    <ClCompile Include="..\tf2\features\proj_sim.cpp" />
+    <ClCompile Include="..\tf2\features\projectile_warning.cpp" />
+    <ClCompile Include="..\tf2\features\splash.cpp" />
+    <ClCompile Include="..\tf2\features\move_sim.cpp" />
+    <ClCompile Include="..\tf2\features\movement_recorder.cpp" />
+    <ClCompile Include="..\tf2\features\radio.cpp" />
+    <ClCompile Include="..\tf2\features\ragebot.cpp" />
+    <ClCompile Include="..\tf2\features\resolver.cpp" />
+    <ClCompile Include="..\tf2\features\melee.cpp" />
+    <ClCompile Include="..\tf2\features\holdaim_mgr.cpp" />
+    <ClCompile Include="..\tf2\features\interp_mgr.cpp" />
+    <ClCompile Include="..\tf2\features\skybox.cpp" />
+    <ClCompile Include="..\tf2\features\soundboard.cpp" />
+    <ClCompile Include="..\tf2\features\session.cpp" />
+    <ClCompile Include="..\tf2\features\skin_share.cpp" />
+    <ClCompile Include="..\tf2\features\skins.cpp" />
+    <ClCompile Include="..\tf2\features\streamer_mode.cpp" />
+    <ClCompile Include="..\tf2\features\spectator_list.cpp" />
+    <ClCompile Include="..\tf2\features\tracers.cpp" />
+    <ClCompile Include="..\tf2\features\trajectory.cpp" />
+    <ClCompile Include="..\tf2\features\viewmodel.cpp" />
+    <ClCompile Include="..\tf2\features\watchdog.cpp" />
+    <ClCompile Include="..\tf2\features\weather.cpp" />
+    <ClCompile Include="..\tf2\features\world_modulation.cpp" />
+    <ClCompile Include="..\tf2\features\post_process.cpp" />
+    <ClCompile Include="..\tf2\features\medbot.cpp" />
+    <ClCompile Include="..\tf2\dev_tables.cpp" />
+    <ClCompile Include="..\tf2\features\server_hitboxes.cpp" Condition="'$(Configuration)'=='Debug'" />
+    <ClCompile Include="..\base\libs\libm\__cos.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__math_divzero.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__math_invalid.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__math_oflow.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__math_uflow.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__math_xflow.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__rem_pio2.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__rem_pio2_large.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__sin.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__tan.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\acos.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\asin.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\atan.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\atan2.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\cos.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\exp.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\exp_data.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\fmod.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\frexp.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\ldexp.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\log.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\log10.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\log_data.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\pow.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\pow_data.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\scalbn.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\sin.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\tan.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)base\libs\libc;$(SolutionDir)base\libs\libm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>libm.h</ForcedIncludeFiles>
+      <AdditionalOptions>/X /clang:-Wno-reorder-init-list %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Update="..\tf2\features\ragebot.cpp" Condition="'$(Configuration)'=='Debug'">
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    </ClCompile>
+    <ClCompile Update="..\tf2\features\proj_sim.cpp" Condition="'$(Configuration)'=='Debug'">
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    </ClCompile>
+    <ClCompile Update="..\tf2\features\splash.cpp" Condition="'$(Configuration)'=='Debug'">
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    </ClCompile>
+    <ClCompile Update="..\tf2\features\move_sim.cpp" Condition="'$(Configuration)'=='Debug'">
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    </ClCompile>
+    <ClCompile Update="..\tf2\features\strafe-prediction.cpp" Condition="'$(Configuration)'=='Debug'">
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\base\api\api.hpp" />
+    <ClInclude Include="..\base\audio\audio.hpp" />
+    <ClInclude Include="..\base\audio\codecs.hpp" />
+    <ClInclude Include="..\base\audio\stream.hpp" />
+    <ClInclude Include="..\base\base.hpp" />
+    <ClInclude Include="..\base\gui\arena.hpp" />
+    <ClInclude Include="..\base\gui\gui.hpp" />
+    <ClInclude Include="..\base\gui\indicator.hpp" />
+    <ClInclude Include="..\base\gui\notifications.hpp" />
+    <ClInclude Include="..\base\gui\particles.hpp" />
+    <ClInclude Include="..\base\gui\sound_data.hpp" />
+    <ClInclude Include="..\base\gui\theme.hpp" />
+    <ClInclude Include="..\base\gui\watermark.hpp" />
+    <ClInclude Include="..\base\hook\allocator.hpp" />
+    <ClInclude Include="..\base\hook\binding.hpp" />
+    <ClInclude Include="..\base\hook\catalog.hpp" />
+    <ClInclude Include="..\base\hook\easy.hpp" />
+    <ClInclude Include="..\base\hook\hook.hpp" />
+    <ClInclude Include="..\base\hook\inline_hook.hpp" />
+    <ClInclude Include="..\base\hook\utility.hpp" />
+    <ClInclude Include="..\base\hook\vmt_hook.hpp" />
+    <ClInclude Include="..\base\input\input.hpp" />
+    <ClInclude Include="..\base\libs\hde32.hpp" />
+    <ClInclude Include="..\base\libs\hde64.hpp" />
+    <ClInclude Include="..\base\libs\lazy_importer.hpp" />
+    <ClInclude Include="..\base\libs\libc\assert.h" />
+    <ClInclude Include="..\base\libs\libc\ctype.h" />
+    <ClInclude Include="..\base\libs\libc\errno.h" />
+    <ClInclude Include="..\base\libs\libc\locale.h" />
+    <ClInclude Include="..\base\libs\libc\math.h" />
+    <ClInclude Include="..\base\libs\libc\setjmp.h" />
+    <ClInclude Include="..\base\libs\libc\stdio.h" />
+    <ClInclude Include="..\base\libs\libc\stdlib.h" />
+    <ClInclude Include="..\base\libs\libc\string.h" />
+    <ClInclude Include="..\base\libs\libc\time.h" />
+    <ClInclude Include="..\base\libs\libm\exp_data.h" />
+    <ClInclude Include="..\base\libs\libm\features.h" />
+    <ClInclude Include="..\base\libs\libm\libm.h" />
+    <ClInclude Include="..\base\libs\libm\log_data.h" />
+    <ClInclude Include="..\base\libs\libm\pow_data.h" />
+    <ClInclude Include="..\base\libs\lua\lapi.h" />
+    <ClInclude Include="..\base\libs\lua\lauxlib.h" />
+    <ClInclude Include="..\base\libs\lua\lcode.h" />
+    <ClInclude Include="..\base\libs\lua\lctype.h" />
+    <ClInclude Include="..\base\libs\lua\ldebug.h" />
+    <ClInclude Include="..\base\libs\lua\ldo.h" />
+    <ClInclude Include="..\base\libs\lua\lfunc.h" />
+    <ClInclude Include="..\base\libs\lua\lgc.h" />
+    <ClInclude Include="..\base\libs\lua\ljumptab.h" />
+    <ClInclude Include="..\base\libs\lua\llex.h" />
+    <ClInclude Include="..\base\libs\lua\llimits.h" />
+    <ClInclude Include="..\base\libs\lua\lmem.h" />
+    <ClInclude Include="..\base\libs\lua\lobject.h" />
+    <ClInclude Include="..\base\libs\lua\lopcodes.h" />
+    <ClInclude Include="..\base\libs\lua\lopnames.h" />
+    <ClInclude Include="..\base\libs\lua\lparser.h" />
+    <ClInclude Include="..\base\libs\lua\lprefix.h" />
+    <ClInclude Include="..\base\libs\lua\lstate.h" />
+    <ClInclude Include="..\base\libs\lua\lstring.h" />
+    <ClInclude Include="..\base\libs\lua\ltable.h" />
+    <ClInclude Include="..\base\libs\lua\ltm.h" />
+    <ClInclude Include="..\base\libs\lua\lua.h" />
+    <ClInclude Include="..\base\libs\lua\luaconf.h" />
+    <ClInclude Include="..\base\libs\lua\lualib.h" />
+    <ClInclude Include="..\base\libs\lua\lundump.h" />
+    <ClInclude Include="..\base\libs\lua\lvm.h" />
+    <ClInclude Include="..\base\libs\lua\lzio.h" />
+    <ClInclude Include="..\base\libs\minimp3.h" />
+    <ClInclude Include="..\base\libs\table32.hpp" />
+    <ClInclude Include="..\base\libs\table64.hpp" />
+    <ClInclude Include="..\base\math\math.hpp" />
+    <ClInclude Include="..\base\math\vector.hpp" />
+    <ClInclude Include="..\base\render\d3d11.hpp" />
+    <ClInclude Include="..\base\render\d3d9.hpp" />
+    <ClInclude Include="..\base\render\font.hpp" />
+    <ClInclude Include="..\base\render\gdi.hpp" />
+    <ClInclude Include="..\base\render\icons.hpp" />
+    <ClInclude Include="..\base\render\overlay.hpp" />
+    <ClInclude Include="..\base\render\render.hpp" />
+    <ClInclude Include="..\base\render\shaders\blur.hpp" />
+    <ClInclude Include="..\base\render\shaders\glow.hpp" />
+    <ClInclude Include="..\base\render\shaders\grade.hpp" />
+    <ClInclude Include="..\base\render\shaders\model.hpp" />
+    <ClInclude Include="..\base\render\shaders\overlay11.hpp" />
+    <ClInclude Include="..\base\runtime\algorithm.hpp" />
+    <ClInclude Include="..\base\runtime\array.hpp" />
+    <ClInclude Include="..\base\runtime\assert.hpp" />
+    <ClInclude Include="..\base\runtime\atomic.hpp" />
+    <ClInclude Include="..\base\runtime\exceptions.hpp" />
+    <ClInclude Include="..\base\runtime\hash.hpp" />
+    <ClInclude Include="..\base\runtime\hash_table.hpp" />
+    <ClInclude Include="..\base\runtime\integrity.hpp" />
+    <ClInclude Include="..\base\runtime\memory.hpp" />
+    <ClInclude Include="..\base\runtime\mutex.hpp" />
+    <ClInclude Include="..\base\runtime\obfuscation.hpp" />
+    <ClInclude Include="..\base\runtime\profiler.hpp" />
+    <ClInclude Include="..\base\runtime\thread.hpp" />
+    <ClInclude Include="..\base\runtime\thread_pool.hpp" />
+    <ClInclude Include="..\base\runtime\unique_ptr.hpp" />
+    <ClInclude Include="..\base\runtime\unordered_map.hpp" />
+    <ClInclude Include="..\base\runtime\unordered_set.hpp" />
+    <ClInclude Include="..\base\runtime\vector.hpp" />
+    <ClInclude Include="..\base\script\bind.hpp" />
+    <ClInclude Include="..\base\script\ide.hpp" />
+    <ClInclude Include="..\base\script\script.hpp" />
+    <ClInclude Include="..\base\steam.hpp" />
+    <ClInclude Include="..\base\steam_html.hpp" />
+    <ClInclude Include="..\base\util\address.hpp" />
+    <ClInclude Include="..\base\util\base64.hpp" />
+    <ClInclude Include="..\base\util\crypto.hpp" />
+    <ClInclude Include="..\base\util\ed25519.hpp" />
+    <ClInclude Include="..\base\util\format.hpp" />
+    <ClInclude Include="..\base\util\json.hpp" />
+    <ClInclude Include="..\base\util\pe_module.hpp" />
+    <ClInclude Include="..\base\util\scan.hpp" />
+    <ClInclude Include="..\base\util\string.hpp" />
+    <ClInclude Include="..\base\util\time.hpp" />
+    <ClInclude Include="..\base\util\typedefs.hpp" />
+    <ClInclude Include="..\base\util\windefs.hpp" />
+    <ClInclude Include="..\tf2\config.hpp" />
+    <ClInclude Include="..\tf2\config_fields.inl" />
+    <ClInclude Include="..\tf2\config_storage.hpp" />
+    <ClInclude Include="..\tf2\damage.hpp" />
+    <ClInclude Include="..\tf2\entities.hpp" />
+    <ClInclude Include="..\tf2\features\air_blast.hpp" />
+    <ClInclude Include="..\tf2\features\anims.hpp" />
+    <ClInclude Include="..\tf2\features\anti_aim.hpp" />
+    <ClInclude Include="..\tf2\features\anti_backstab.hpp" />
+    <ClInclude Include="..\tf2\features\auto_det.hpp" />
+    <ClInclude Include="..\tf2\features\auto_rocketjmp.hpp" />
+    <ClInclude Include="..\tf2\features\auto_vacc.hpp" />
+    <ClInclude Include="..\tf2\features\bone_setup.hpp" />
+    <ClInclude Include="..\tf2\features\chams.hpp" />
+    <ClInclude Include="..\tf2\features\compression.hpp" />
+    <ClInclude Include="..\tf2\features\crits.hpp" />
+    <ClInclude Include="..\tf2\features\datamaps.hpp" />
+    <ClInclude Include="..\tf2\features\doors.hpp" />
+    <ClInclude Include="..\tf2\features\entity_cache.hpp" />
+    <ClInclude Include="..\tf2\features\esp.hpp" />
+    <ClInclude Include="..\tf2\features\esp_builder.hpp" />
+    <ClInclude Include="..\tf2\features\event_notifiers.hpp" />
+    <ClInclude Include="..\tf2\features\events.hpp" />
+    <ClInclude Include="..\tf2\features\extrapolate.hpp" />
+    <ClInclude Include="..\tf2\features\fake_latency.hpp" />
+    <ClInclude Include="..\tf2\features\fakelag.hpp" />
+    <ClInclude Include="..\tf2\features\fall_damage.hpp" />
+    <ClInclude Include="..\tf2\features\fast_queue.hpp" />
+    <ClInclude Include="..\tf2\features\features.hpp" />
+    <ClInclude Include="..\tf2\features\glow.hpp" />
+    <ClInclude Include="..\tf2\features\hitmarker.hpp" />
+    <ClInclude Include="..\tf2\features\holdaim_mgr.hpp" />
+    <ClInclude Include="..\tf2\features\interp_mgr.hpp" />
+    <ClInclude Include="..\tf2\features\lagcomp.hpp" />
+    <ClInclude Include="..\tf2\features\loading.hpp" />
+    <ClInclude Include="..\tf2\features\medbot.hpp" />
+    <ClInclude Include="..\tf2\features\melee.hpp" />
+    <ClInclude Include="..\tf2\features\misc.hpp" />
+    <ClInclude Include="..\tf2\features\model_render.hpp" />
+    <ClInclude Include="..\tf2\features\move_sim.hpp" />
+    <ClInclude Include="..\tf2\features\movement_recorder.hpp" />
+    <ClInclude Include="..\tf2\features\networking.hpp" />
+    <ClInclude Include="..\tf2\features\nospread.hpp" />
+    <ClInclude Include="..\tf2\features\party_network.hpp" />
+    <ClInclude Include="..\tf2\features\player_cloud.hpp" />
+    <ClInclude Include="..\tf2\features\player_data.hpp" />
+    <ClInclude Include="..\tf2\features\player_perf.hpp" />
+    <ClInclude Include="..\tf2\features\post_process.hpp" />
+    <ClInclude Include="..\tf2\features\prediction.hpp" />
+    <ClInclude Include="..\tf2\features\proj_camera.hpp" />
+    <ClInclude Include="..\tf2\features\proj_sim.hpp" />
+    <ClInclude Include="..\tf2\features\projectile_warning.hpp" />
+    <ClInclude Include="..\tf2\features\radio.hpp" />
+    <ClInclude Include="..\tf2\features\ragebot.hpp" />
+    <ClInclude Include="..\tf2\features\resolver.hpp" />
+    <ClInclude Include="..\tf2\features\server_hitboxes.hpp" />
+    <ClInclude Include="..\tf2\features\session.hpp" />
+    <ClInclude Include="..\tf2\features\skin_share.hpp" />
+    <ClInclude Include="..\tf2\features\skins.hpp" />
+    <ClInclude Include="..\tf2\features\skybox.hpp" />
+    <ClInclude Include="..\tf2\features\soundboard.hpp" />
+    <ClInclude Include="..\tf2\features\spectator_list.hpp" />
+    <ClInclude Include="..\tf2\features\splash.hpp" />
+    <ClInclude Include="..\tf2\features\strafe-prediction.hpp" />
+    <ClInclude Include="..\tf2\features\streamer_mode.hpp" />
+    <ClInclude Include="..\tf2\features\tickbase.hpp" />
+    <ClInclude Include="..\tf2\features\tracers.hpp" />
+    <ClInclude Include="..\tf2\features\trajectory.hpp" />
+    <ClInclude Include="..\tf2\features\viewmodel.hpp" />
+    <ClInclude Include="..\tf2\features\watchdog.hpp" />
+    <ClInclude Include="..\tf2\features\weather.hpp" />
+    <ClInclude Include="..\tf2\features\world_modulation.hpp" />
+    <ClInclude Include="..\tf2\global.hpp" />
+    <ClInclude Include="..\tf2\hooks.inl" />
+    <ClInclude Include="..\tf2\link.hpp" />
+    <ClInclude Include="..\tf2\menu.hpp" />
+    <ClInclude Include="..\tf2\netvars.hpp" />
+    <ClInclude Include="..\tf2\preview.hpp" />
+    <ClInclude Include="..\tf2\script_api.hpp" />
+    <ClInclude Include="..\tf2\sdk.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.vsconfig" />
+    <None Include="..\BUILDING.md" />
+    <None Include="..\build.bat" />
+    <None Include="..\tools\generate_vs_project.py" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

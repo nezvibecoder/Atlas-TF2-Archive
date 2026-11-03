@@ -1,0 +1,1136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="base">
+      <UniqueIdentifier>{B0D09EFA-2894-58F7-9378-7C84CD0A29A2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\api">
+      <UniqueIdentifier>{F19CF6C2-C56A-51A2-BCAD-D983FB1061FC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\audio">
+      <UniqueIdentifier>{FA7B8311-B7DE-536A-834D-9F6D5812761A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\gui">
+      <UniqueIdentifier>{EFF4B760-8BA0-51F5-9D3B-CC8BFFBEB913}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\hook">
+      <UniqueIdentifier>{AE41C414-3E5E-51C5-81D7-10F376B236C9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\input">
+      <UniqueIdentifier>{59A405B2-F6F6-5D88-96F7-1CED983771A6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\libs">
+      <UniqueIdentifier>{5C2DE78E-8FF8-5C7F-85A0-00BF59AE5D21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\libs\libc">
+      <UniqueIdentifier>{A750670A-AA7F-5EDF-BD40-223B510D6495}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\libs\libm">
+      <UniqueIdentifier>{DE9861AE-1614-529E-9471-F8AE512535DF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\libs\lua">
+      <UniqueIdentifier>{8321D566-2CEA-5C2C-A1C4-B082072A9850}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\math">
+      <UniqueIdentifier>{5AFAC8F1-28AF-596B-A49B-331C03D7DA6D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\render">
+      <UniqueIdentifier>{645DA1F8-1A34-5B68-BA92-0BC4AC9EBE7F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\render\shaders">
+      <UniqueIdentifier>{378A2B20-E4E2-5ACE-ADBA-1C2F7A8EE195}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\runtime">
+      <UniqueIdentifier>{9BEDC889-6BC5-5F7E-B9CD-381766E9EE4B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\script">
+      <UniqueIdentifier>{F5BC3A4E-443F-5F39-AC3C-4D902C476DA3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\util">
+      <UniqueIdentifier>{A04CD793-25B5-57CC-B2BD-4A0A1EA97D12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="docs">
+      <UniqueIdentifier>{EBC3DBE2-DEC4-580E-8BCD-987C3A428A3D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tf2">
+      <UniqueIdentifier>{BEFF95E3-B560-57F2-AAD1-79618C387508}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tf2\features">
+      <UniqueIdentifier>{533C24D9-4FDE-58E1-881E-762310FB7AA0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tools">
+      <UniqueIdentifier>{479DCEA2-958F-51CF-B6FF-260A14885616}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\base\steam.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\steam_html.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\audio\audio.cpp">
+      <Filter>base\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\audio\codecs.cpp">
+      <Filter>base\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\audio\stream.cpp">
+      <Filter>base\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\input\input.cpp">
+      <Filter>base\input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\render\font.cpp">
+      <Filter>base\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\render\gdi.cpp">
+      <Filter>base\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\render\render.cpp">
+      <Filter>base\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\hook\allocator.cpp">
+      <Filter>base\hook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\hook\easy.cpp">
+      <Filter>base\hook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\hook\inline_hook.cpp">
+      <Filter>base\hook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\hook\vmt_hook.cpp">
+      <Filter>base\hook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\arena.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\gui.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\containers.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\editor.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\elements.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\picker.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\widgets.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\notifications.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\sounds.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\watermark.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\indicator.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\gui\particles.cpp">
+      <Filter>base\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\runtime\memory.cpp">
+      <Filter>base\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\runtime\assert.cpp">
+      <Filter>base\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\runtime\thread.cpp">
+      <Filter>base\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\runtime\thread_pool.cpp">
+      <Filter>base\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\runtime\exceptions.cpp">
+      <Filter>base\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\runtime\integrity.cpp">
+      <Filter>base\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\base.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\util\crypto.cpp">
+      <Filter>base\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\util\ed25519.cpp">
+      <Filter>base\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\util\json.cpp">
+      <Filter>base\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\util\pe_module.cpp">
+      <Filter>base\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\api\api.cpp">
+      <Filter>base\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\script\script.cpp">
+      <Filter>base\script</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\script\bind.cpp">
+      <Filter>base\script</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\script\ide.cpp">
+      <Filter>base\script</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\script\lstr.cpp">
+      <Filter>base\script</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\render\canvas.cpp">
+      <Filter>base\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\render\overlay.cpp">
+      <Filter>base\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\script\lua_core.cpp">
+      <Filter>base\script</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\script\dtoa.cpp">
+      <Filter>base\script</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\script\crt.cpp">
+      <Filter>base\script</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\hde64.cpp">
+      <Filter>base\libs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\entry.cpp">
+      <Filter>tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\global.cpp">
+      <Filter>tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\menu.cpp">
+      <Filter>tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\preview.cpp">
+      <Filter>tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\config.cpp">
+      <Filter>tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\config_storage.cpp">
+      <Filter>tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\script_api.cpp">
+      <Filter>tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\sdk.cpp">
+      <Filter>tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\entities.cpp">
+      <Filter>tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\netvars.cpp">
+      <Filter>tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\anti_aim.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\anti_backstab.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\strafe-prediction.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\air_blast.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\anims.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\auto_det.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\auto_rocketjmp.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\auto_vacc.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\bone_setup.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\lagcomp.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\extrapolate.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\fakelag.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\fake_latency.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\fast_queue.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\prediction.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\datamaps.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\doors.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\fall_damage.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\misc.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\player_data.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\player_cloud.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\player_perf.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\party_network.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\entity_cache.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\esp.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\esp_builder.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\chams.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\model_render.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\glow.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\hitmarker.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\compression.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\event_notifiers.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\crits.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\events.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\loading.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\networking.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\tickbase.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\nospread.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\proj_camera.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\proj_sim.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\projectile_warning.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\splash.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\move_sim.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\movement_recorder.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\radio.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\ragebot.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\resolver.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\melee.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\holdaim_mgr.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\interp_mgr.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\skybox.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\soundboard.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\session.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\skin_share.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\skins.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\streamer_mode.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\spectator_list.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\tracers.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\trajectory.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\viewmodel.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\watchdog.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\weather.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\world_modulation.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\post_process.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\medbot.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\dev_tables.cpp">
+      <Filter>tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tf2\features\server_hitboxes.cpp">
+      <Filter>tf2\features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__cos.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__math_divzero.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__math_invalid.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__math_oflow.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__math_uflow.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__math_xflow.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__rem_pio2.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__rem_pio2_large.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__sin.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\__tan.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\acos.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\asin.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\atan.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\atan2.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\cos.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\exp.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\exp_data.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\fmod.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\frexp.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\ldexp.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\log.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\log10.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\log_data.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\pow.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\pow_data.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\scalbn.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\sin.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\base\libs\libm\tan.c">
+      <Filter>base\libs\libm</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\base\api\api.hpp">
+      <Filter>base\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\audio\audio.hpp">
+      <Filter>base\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\audio\codecs.hpp">
+      <Filter>base\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\audio\stream.hpp">
+      <Filter>base\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\base.hpp">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\gui\arena.hpp">
+      <Filter>base\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\gui\gui.hpp">
+      <Filter>base\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\gui\indicator.hpp">
+      <Filter>base\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\gui\notifications.hpp">
+      <Filter>base\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\gui\particles.hpp">
+      <Filter>base\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\gui\sound_data.hpp">
+      <Filter>base\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\gui\theme.hpp">
+      <Filter>base\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\gui\watermark.hpp">
+      <Filter>base\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\hook\allocator.hpp">
+      <Filter>base\hook</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\hook\binding.hpp">
+      <Filter>base\hook</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\hook\catalog.hpp">
+      <Filter>base\hook</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\hook\easy.hpp">
+      <Filter>base\hook</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\hook\hook.hpp">
+      <Filter>base\hook</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\hook\inline_hook.hpp">
+      <Filter>base\hook</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\hook\utility.hpp">
+      <Filter>base\hook</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\hook\vmt_hook.hpp">
+      <Filter>base\hook</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\input\input.hpp">
+      <Filter>base\input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\hde32.hpp">
+      <Filter>base\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\hde64.hpp">
+      <Filter>base\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lazy_importer.hpp">
+      <Filter>base\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libc\assert.h">
+      <Filter>base\libs\libc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libc\ctype.h">
+      <Filter>base\libs\libc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libc\errno.h">
+      <Filter>base\libs\libc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libc\locale.h">
+      <Filter>base\libs\libc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libc\math.h">
+      <Filter>base\libs\libc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libc\setjmp.h">
+      <Filter>base\libs\libc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libc\stdio.h">
+      <Filter>base\libs\libc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libc\stdlib.h">
+      <Filter>base\libs\libc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libc\string.h">
+      <Filter>base\libs\libc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libc\time.h">
+      <Filter>base\libs\libc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libm\exp_data.h">
+      <Filter>base\libs\libm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libm\features.h">
+      <Filter>base\libs\libm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libm\libm.h">
+      <Filter>base\libs\libm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libm\log_data.h">
+      <Filter>base\libs\libm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\libm\pow_data.h">
+      <Filter>base\libs\libm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lapi.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lauxlib.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lcode.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lctype.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\ldebug.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\ldo.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lfunc.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lgc.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\ljumptab.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\llex.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\llimits.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lmem.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lobject.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lopcodes.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lopnames.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lparser.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lprefix.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lstate.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lstring.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\ltable.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\ltm.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lua.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\luaconf.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lualib.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lundump.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lvm.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\lua\lzio.h">
+      <Filter>base\libs\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\minimp3.h">
+      <Filter>base\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\table32.hpp">
+      <Filter>base\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\libs\table64.hpp">
+      <Filter>base\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\math\math.hpp">
+      <Filter>base\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\math\vector.hpp">
+      <Filter>base\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\d3d11.hpp">
+      <Filter>base\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\d3d9.hpp">
+      <Filter>base\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\font.hpp">
+      <Filter>base\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\gdi.hpp">
+      <Filter>base\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\icons.hpp">
+      <Filter>base\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\overlay.hpp">
+      <Filter>base\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\render.hpp">
+      <Filter>base\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\shaders\blur.hpp">
+      <Filter>base\render\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\shaders\glow.hpp">
+      <Filter>base\render\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\shaders\grade.hpp">
+      <Filter>base\render\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\shaders\model.hpp">
+      <Filter>base\render\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\render\shaders\overlay11.hpp">
+      <Filter>base\render\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\algorithm.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\array.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\assert.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\atomic.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\exceptions.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\hash.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\hash_table.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\integrity.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\memory.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\mutex.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\obfuscation.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\profiler.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\thread.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\thread_pool.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\unique_ptr.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\unordered_map.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\unordered_set.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\runtime\vector.hpp">
+      <Filter>base\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\script\bind.hpp">
+      <Filter>base\script</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\script\ide.hpp">
+      <Filter>base\script</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\script\script.hpp">
+      <Filter>base\script</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\steam.hpp">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\steam_html.hpp">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\address.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\base64.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\crypto.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\ed25519.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\format.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\json.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\pe_module.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\scan.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\string.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\time.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\typedefs.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base\util\windefs.hpp">
+      <Filter>base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\config.hpp">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\config_fields.inl">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\config_storage.hpp">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\damage.hpp">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\entities.hpp">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\air_blast.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\anims.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\anti_aim.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\anti_backstab.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\auto_det.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\auto_rocketjmp.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\auto_vacc.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\bone_setup.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\chams.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\compression.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\crits.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\datamaps.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\doors.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\entity_cache.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\esp.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\esp_builder.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\event_notifiers.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\events.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\extrapolate.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\fake_latency.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\fakelag.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\fall_damage.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\fast_queue.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\features.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\glow.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\hitmarker.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\holdaim_mgr.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\interp_mgr.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\lagcomp.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\loading.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\medbot.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\melee.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\misc.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\model_render.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\move_sim.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\movement_recorder.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\networking.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\nospread.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\party_network.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\player_cloud.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\player_data.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\player_perf.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\post_process.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\prediction.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\proj_camera.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\proj_sim.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\projectile_warning.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\radio.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\ragebot.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\resolver.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\server_hitboxes.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\session.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\skin_share.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\skins.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\skybox.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\soundboard.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\spectator_list.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\splash.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\strafe-prediction.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\streamer_mode.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\tickbase.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\tracers.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\trajectory.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\viewmodel.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\watchdog.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\weather.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\features\world_modulation.hpp">
+      <Filter>tf2\features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\global.hpp">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\hooks.inl">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\link.hpp">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\menu.hpp">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\netvars.hpp">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\preview.hpp">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\script_api.hpp">
+      <Filter>tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tf2\sdk.hpp">
+      <Filter>tf2</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.vsconfig">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="..\BUILDING.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="..\build.bat">
+      <Filter>tools</Filter>
+    </None>
+    <None Include="..\tools\generate_vs_project.py">
+      <Filter>tools</Filter>
+    </None>
+  </ItemGroup>
+</Project>
